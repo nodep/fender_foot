@@ -1,7 +1,7 @@
 TARGET  = fender_foot
 DEVICE  = avr128da48
 
-F_CPU   = 24000000
+F_CPU   = 4000000
 
 # Get AVRDUDE here: https://github.com/mariusgreuel/avrdude
 AVRDUDE = avrdude -c pkobn_updi -p $(DEVICE)

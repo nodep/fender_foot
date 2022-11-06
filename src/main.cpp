@@ -13,12 +13,12 @@
 using led = IoPin<'C', 6>;
 using btn = IoPin<'C', 7>;
 
-// init CPU clock and PORTMUX
+// init the CPU clock and PORTMUX
 void hw_init()
 {
 	// get us up to 24MHz; warp speed!
-	CPU_CCP = CCP_IOREG_gc;
-	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
+	//CPU_CCP = CCP_IOREG_gc;
+	//CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
 
 	// TimerA 1 PWM to PORTC
 	PORTMUX.TCAROUTEA = PORTMUX_TCA1_0_bm;
@@ -48,15 +48,39 @@ int main()
 
 	Pedals pedals;
 	
+	uint8_t mode = 0;
+	uint16_t num = 0;
 	while (true)
 	{
 		const PedalEvent event = pedals.get_event();
 		if (event != evNone)
 		{
+			if (pedals.ftsw_btn3  &&  pedals.ftsw_btn4)
+				pedals.set_led(ledFtswMiddle);
+			else
+				pedals.clear_led(ledFtswMiddle);
+				
 			if (event == evFtswBtn1Down)
 			{
 				pedals.set_led(ledFtswModeTuner);
 				pedals.set_led(ledExpGreen);
+				
+				if (++mode == 4)
+					mode = 1;
+				
+				pedals.clear_led(ledFtswMode1);
+				pedals.clear_led(ledFtswMode2);
+				pedals.clear_led(ledFtswMode3);
+				
+				if (mode == 1)
+					pedals.set_led(ledFtswMode1);
+				else if (mode == 2)
+					pedals.set_led(ledFtswMode2);
+				else if (mode == 3)
+					pedals.set_led(ledFtswMode3);
+
+				num = 0;
+				pedals.set_ftsw_number(num);
 			}
 			else if (event == evFtswBtn1Up)
 			{
@@ -65,6 +89,8 @@ int main()
 			}
 			else if (event == evFtswBtn2Down)
 			{
+				num += 100;
+				pedals.set_ftsw_number(num);
 				pedals.set_led(ledFtswQA1);
 			}
 			else if (event == evFtswBtn2Up)
@@ -73,6 +99,8 @@ int main()
 			}
 			else if (event == evFtswBtn3Down)
 			{
+				num += 10;
+				pedals.set_ftsw_number(num);
 				pedals.set_led(ledFtswQA2);
 				pedals.set_led(ledExpRed);
 			}
@@ -83,6 +111,8 @@ int main()
 			}
 			else if (event == evFtswBtn4Down)
 			{
+				num += 1;
+				pedals.set_ftsw_number(num);
 				pedals.set_led(ledFtswQA3);
 			}
 			else if (event == evFtswBtn4Up)
@@ -91,24 +121,8 @@ int main()
 			}
 			else if (event == evExpPosition)
 			{
-				const uint16_t num = pedals.exp_position;
-				pedals.set_ftsw_number(num >> 3);
-				
-				if (num & 0x1000)
-					pedals.set_led(ledFtswMode1);
-				else
-					pedals.clear_led(ledFtswMode1);
-
-				if (num & 0x800)
-					pedals.set_led(ledFtswMode2);
-				else
-					pedals.clear_led(ledFtswMode2);
-				
-				if (num & 0x400)
-					pedals.set_led(ledFtswMode3);
-				else
-					pedals.clear_led(ledFtswMode3);
-				
+				dprint("pos %d\n", pedals.exp_position);
+				pedals.set_ftsw_number(pedals.exp_position >> 3);
 			}
 			else if (event == evExpBtnDown)
 			{

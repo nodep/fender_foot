@@ -6,9 +6,9 @@ I am in the process of building myself a guitar amp, and I thought it would be n
 
 I also have a Fender Mustang III with its 4 button foot switch (MS-4) and the expression pedal (EXP-1). So I though I might reverse engineer their communication protocol and use them on my amp in the making.
 
-So this is the result of my little adventure. :)
+So this is the result of my little adventure.
 
-[Fender claims](https://tone-support.fender.com/hc/en-us/articles/115003535766-Will-my-MS-4-or-ULT-4-4-Button-foot) that the 4 button foot switches for previous versions of their modeling amps (G-DEC 30 (ULT-4) and Mustang III, IV and V (MS-4)) are compatible with Mustang GT (MGT-4), meaning you can use the older foot switche with the Mustang GT amps. I don't know if this means that this protocol description also applies to these other foot switch pedals, but I strongly suspect it does at least in part.
+[Fender claims](https://tone-support.fender.com/hc/en-us/articles/115003535766) that the 4 button foot switches for previous versions of their modeling amps (G-DEC 30 (ULT-4) and Mustang III, IV and V (MS-4)) are compatible with Mustang GT (MGT-4), meaning you can use the older foot switches with the Mustang GT amps. I don't know if this means that this protocol description also applies to these other foot switch pedals, but I strongly suspect it does at least in part.
 
 Fender's latest range of modeling amplifiers (Mustang GTX) also has a new foot switch pedal (GTX-7). It has 7 buttons (instead of only 4 on the older ones), but it has the same cable, the same number of individual LEDs (8) and the same 3 digit 7 segment LED display. I can't be sure until I test it, but I have a strong feeling that the protocol for GTX-7 is an extension of the protocol described here.
 
@@ -60,14 +60,14 @@ These notify the amp that the state of a button has been changed. The payload be
 
 | pedal | event | description
 |-------|-------|-------------
-| MS-4  | 7D 7C | button 4 was pressed
-| MS-4  | 7D 7D | button 3 was pressed
-| MS-4  | 7D 7E | button 2 was pressed
-| MS-4  | 7D 7F | button 1 was pressed
-| MS-4  | 7F 7C | button 4 was released
-| MS-4  | 7F 7D | button 3 was released
-| MS-4  | 7F 7E | button 2 was released
-| MS-4  | 7F 7F | button 1 was released
+| MS-4  | 7D 7C | button 4 was pressed (QA3)
+| MS-4  | 7D 7D | button 3 was pressed (QA2)
+| MS-4  | 7D 7E | button 2 was pressed (QA1)
+| MS-4  | 7D 7F | button 1 was pressed (Mode/Tuner)
+| MS-4  | 7F 7C | button 4 was released (QA3)
+| MS-4  | 7F 7D | button 3 was released (QA2)
+| MS-4  | 7F 7E | button 2 was released (QA1)
+| MS-4  | 7F 7F | button 1 was released (Mode/Tuner)
 | EXP-1 | 7C 00 | button was pressed
 | EXP-1 | 7E 00 | button was released
 
@@ -91,7 +91,7 @@ These are sent from the amp to the pedal to update the state of the LEDs and the
 
 | byte 1 (selector) | byte 2 (value) | description
 |-------------------|----------------|-------------
-| 0xxx xxxy         | 0yyy yyyy      | x: bits of the LED group selector, y: new on/off states for this LED group. |
+| 0zzz zzzy         | 0yyy yyyy      | z: bits of the LED group selector, y: new on/off states for this LED group. |
 
 The LEDs selector values:
 

@@ -21,28 +21,22 @@ const uint8_t ACK		= 0xFD;
 const uint8_t ERROR		= 0xFE;
 const uint8_t EOS		= 0xFF;	// end of stream
 
-const uint8_t FTSW_BTN4 = 0x7C;
-const uint8_t FTSW_BTN3 = 0x7D;
-const uint8_t FTSW_BTN2 = 0x7E;
-const uint8_t FTSW_BTN1 = 0x7F;
-
-const uint8_t FTSW_BTN_DOWN	= 0x7D;
-const uint8_t FTSW_BTN_UP	= 0x7F;
-
 const uint8_t LED_FTSW	= 0x70;	// the LEDS on the expression pedal
 const uint8_t LED_DISP2	= 0x72;	// left digit on the LED display
 const uint8_t LED_DISP1	= 0x74;	// middle digit on the LED display
 const uint8_t LED_DISP0	= 0x76;	// right digit on the LED display
 const uint8_t LED_EXP	= 0x70;	// the LEDS on the foot switch
 
+const bool SHOW_LEADING_ZEROS = true;
+
 enum
 {
-	// number of NACK-ed messages until we give up on a pedal
+	// number of consecutive NACK-ed messages before we give up on a pedal
 	MAX_ERROR_CNT = 5,
 
 	// how many milliseconds do we wait from the last reception
 	// until we start refreshing LEDs
-	REFRESH_DELAY = 10,
+	REFRESH_DELAY = 0,
 };
 
 static const uint8_t digit_segments[10] PROGMEM =
@@ -146,8 +140,11 @@ void Pedals::clear_ftsw()
 {
 	ftsw_error_cnt = 0;
 	ftsw_present = false;
+	
+	// these force a refresh of LEDs
 	ftsw_number = FTSW_NUM_UNKNOWN;
 	ftsw_leds = new_ftsw_leds + 1;
+	
 	ftsw_btn1 = ftsw_btn2 = ftsw_btn3 = ftsw_btn4 = false;
 }
 
@@ -155,7 +152,10 @@ void Pedals::clear_exp()
 {
 	exp_error_cnt = 0;
 	exp_present = false;
+
+	// these force a refresh of LEDs
 	exp_leds = new_exp_leds + 1;
+	
 	exp_btn = false;
 	exp_position = 0;
 }
@@ -232,7 +232,8 @@ void Pedals::parse_message()
 
 	expected = received = 0;
 
-	last_reception = Watch::cnt();
+	if (REFRESH_DELAY != 0)
+		last_reception = Watch::cnt();
 
 	PedalEvent event = evNone;
 
@@ -241,11 +242,13 @@ void Pedals::parse_message()
 		if (receive[1] == ID_FTSW)
 		{
 			event = evFtswInit;
+			clear_ftsw();
 			ftsw_present = true;
 		}
 		else if (receive[1] == ID_EXP)
 		{
 			event = evExpInit;
+			clear_exp();
 			exp_present = true;
 		}
 	}
@@ -298,16 +301,27 @@ void Pedals::parse_message()
 
 bool Pedals::send(const uint8_t b)
 {
+	// send the byte
 	send_byte(b);
 
-	uint8_t d = 0;
-	while (!read_byte(d))
-		;
-
-	if (b != d)
-		dprint("send failed:%02X d:%02X\n", b, d);
+	// wait for the byte to appear on RX because
+	// these are connected on the same bus
+	const uint16_t started = Watch::cnt();
+	while (Watch::cnt() - started < Watch::ms2ticks(2))
+	{
+		uint8_t d = 0;
+		if (read_byte(d))
+		{
+			if (b != d)
+				dprint("send failed:%02X d:%02X\n", b, d);
+			
+			return b == d;
+		}
+	}
 	
-	return b == d;
+	dprint("send timeout\n");
+	
+	return false;
 }
 
 bool Pedals::send_message()
@@ -325,15 +339,36 @@ bool Pedals::send_message()
 	send(checksum);
 
 	// wait for ACK
+	const uint16_t started = Watch::cnt();
 	uint8_t ack = 0;
-	while (!read_byte(ack))
-		;
+	bool byte_read = false;
+	while (Watch::cnt() - started < Watch::ms2ticks(2))
+	{
+		if (read_byte(ack))
+		{
+			if (ack == ACK)
+			{
+				if (send_buff[1] == ID_FTSW)
+					ftsw_error_cnt = 0;
+				else if (send_buff[1] == ID_EXP)
+					exp_error_cnt = 0;
+				
+				return true;
+			}
+			
+			byte_read = true;
+			
+			dprint("bad checksum 0x%02x\n", ack);
+			
+			break;
+		}
+	}
 
-	if (ack == ACK)
-		return true;
+	if (!byte_read)
+		dprint("ack timeout\n");
 
-	dprint("bad checksum 0x%02x\n", ack);
-
+	// check if we have too many errors and 
+	// need to give up on a pedal
 	if (send_buff[1] == ID_FTSW)
 	{
 		if (++ftsw_error_cnt == MAX_ERROR_CNT)
@@ -423,7 +458,7 @@ void Pedals::refresh_ftsw_display()
 
 			uint8_t segments;
 			
-			if (d2)
+			if (SHOW_LEADING_ZEROS  ||  d2)
 			{
 				segments = pgm_read_byte(&digit_segments[d2]);
 				if (segments & 0x80)
@@ -431,7 +466,7 @@ void Pedals::refresh_ftsw_display()
 				send_buff[3] = segments & 0x7f;
 			}
 
-			if (d1  ||  d2)
+			if (SHOW_LEADING_ZEROS  ||  d1  ||  d2)
 			{
 				segments = pgm_read_byte(&digit_segments[d1]);
 				if (segments & 0x80)
