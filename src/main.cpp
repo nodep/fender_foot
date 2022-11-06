@@ -6,12 +6,12 @@
 #include "timera.h"
 #include "usart.h"
 #include "avrdbg.h"
+#include "watch.h"
 
 #include "pedals.h"
 
 using led = IoPin<'C', 6>;
 using btn = IoPin<'C', 7>;
-using tmr = TimerA<1>;
 
 // init CPU clock and PORTMUX
 void hw_init()
@@ -34,21 +34,18 @@ int main()
 	// setup the debug log
 	dbgInit();
 	dprint("\nI live...\n");
-	
-	// config the onboard LED and button
+
+	// config the on-board LED and button
 	led::dir_out();
 	led::invert();
-	
+
 	btn::dir_in();
 	btn::pullup();
 
-	// enable PWM on CMP2 of TimerA1
-	tmr::set_clock_div(tmr::div256);
-	//tmr::set_period(0x400);
-	//tmr::set_pwm_duty<2>(0x010);
-	//tmr::enable_pwm<2>();
-	tmr::start();
-	
+	// setup our main clock
+	Watch::set_prescale();
+	Watch::start();
+
 	Pedals pedals;
 	
 	while (true)
@@ -94,8 +91,8 @@ int main()
 			}
 			else if (event == evExpPosition)
 			{
-				uint16_t num = pedals.exp_position;
-				pedals.set_ftsw_number(num);
+				const uint16_t num = pedals.exp_position;
+				pedals.set_ftsw_number(num >> 3);
 				
 				if (num & 0x1000)
 					pedals.set_led(ledFtswMode1);

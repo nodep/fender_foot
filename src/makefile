@@ -1,4 +1,4 @@
-TARGET  = fenderftsw
+TARGET  = fender_foot
 DEVICE  = avr128da48
 
 F_CPU   = 24000000
@@ -12,6 +12,8 @@ CFLAGS += -D_DEBUG
 LFLAGS  = -Wl,--relax
 #LFLAGS += -u vfprintf
 
+# I used AVR Toolchain 3.7 and the latest AVR-Dx pack:
+# https://packs.download.microchip.com/
 COMPILE = avr-g++ -mmcu=$(DEVICE) $(CFLAGS)
 
 OBJECTS = main.o avrdbg.o pedals.o

@@ -6,17 +6,28 @@
 
 #include "avrdbg.h"
 #include "pedals.h"
+#include "watch.h"
 
-const uint8_t ST_INIT	= 0xFD;
-const uint8_t ST_ACK	= 0xFD;
-const uint8_t ST_NACK	= 0xFE;
-const uint8_t ST_BUTTON	= 0xFC;
-const uint8_t ST_LIGHTS	= 0xF8;
-const uint8_t ST_EXP	= 0xFB;
-const uint8_t ST_END	= 0xFF;
+const uint8_t CMD_LED	= 0xF8;
+const uint8_t CMD_DBTN	= 0xFA;
+const uint8_t CMD_POS	= 0xFB;
+const uint8_t CMD_BTN	= 0xFC;
+const uint8_t CMD_INIT	= 0xFD;
 
 const uint8_t ID_EXP	= 0x0C;
 const uint8_t ID_FTSW	= 0x08;
+
+const uint8_t ACK		= 0xFD;
+const uint8_t ERROR		= 0xFE;
+const uint8_t EOS		= 0xFF;	// end of stream
+
+const uint8_t FTSW_BTN4 = 0x7C;
+const uint8_t FTSW_BTN3 = 0x7D;
+const uint8_t FTSW_BTN2 = 0x7E;
+const uint8_t FTSW_BTN1 = 0x7F;
+
+const uint8_t FTSW_BTN_DOWN	= 0x7D;
+const uint8_t FTSW_BTN_UP	= 0x7F;
 
 const uint8_t LED_FTSW	= 0x70;	// the LEDS on the expression pedal
 const uint8_t LED_DISP2	= 0x72;	// left digit on the LED display
@@ -24,45 +35,14 @@ const uint8_t LED_DISP1	= 0x74;	// middle digit on the LED display
 const uint8_t LED_DISP0	= 0x76;	// right digit on the LED display
 const uint8_t LED_EXP	= 0x70;	// the LEDS on the foot switch
 
-enum {
- 	MAX_STREAM_BYTES = 5,
+enum
+{
+	// number of NACK-ed messages until we give up on a pedal
 	MAX_ERROR_CNT = 5,
-};
 
-struct
-{
-	const PedalEvent event;
-	const uint8_t stream[MAX_STREAM_BYTES];
-
-	const PedalEvent get_event() const
-	{
-		return static_cast<PedalEvent>(pgm_read_byte(&event));
-	}
-	
-	const uint8_t get_stream(const uint8_t istream) const
-	{
-		return pgm_read_byte(&stream[istream]);
-	}
-	
-} const messages[] PROGMEM =
-{
-	{evExpPosition,		{ST_EXP,	ID_EXP,		ST_END}},
-
-	{evFtswBtn4Down,	{ST_BUTTON, ID_FTSW,	0x7D, 0x7C, 0x09}},
-	{evFtswBtn3Down,	{ST_BUTTON, ID_FTSW,	0x7D, 0x7D, 0x08}},
-	{evFtswBtn2Down,	{ST_BUTTON, ID_FTSW,	0x7D, 0x7E, 0x0B}},
-	{evFtswBtn1Down,	{ST_BUTTON, ID_FTSW,	0x7D, 0x7F, 0x0A}},
-	{evFtswBtn4Up,		{ST_BUTTON, ID_FTSW,	0x7F, 0x7C, 0x0B}},
-	{evFtswBtn3Up,		{ST_BUTTON, ID_FTSW,	0x7F, 0x7D, 0x0A}},
-	{evFtswBtn2Up,		{ST_BUTTON, ID_FTSW,	0x7F, 0x7E, 0x09}},
-	{evFtswBtn1Up,		{ST_BUTTON, ID_FTSW,	0x7F, 0x7F, 0x08}},
-	{evExpBtnDown,		{ST_BUTTON, ID_EXP,		0x7C, 0x00, 0x70}},
-	{evExpBtnUp,		{ST_BUTTON, ID_EXP,		0x7E, 0x00, 0x72}},
-
-	{evFtswInit,		{ST_INIT,	ID_FTSW,	0x03, 0x0B, ST_END}},
-	{evExpInit,			{ST_INIT,	ID_EXP,		0x01, 0x0D, ST_END}},
-
-	{evNone,			{ST_END}}
+	// how many milliseconds do we wait from the last reception
+	// until we start refreshing LEDs
+	REFRESH_DELAY = 10,
 };
 
 static const uint8_t digit_segments[10] PROGMEM =
@@ -88,11 +68,12 @@ bool Pedals::consume(const uint8_t byte)
 
 		switch (byte)
 		{
-		case ST_INIT:		expected = 4;				break;
-		case ST_BUTTON:		expected = 5;				break;
-		case ST_EXP:		expected = 6;				break;
+		case CMD_INIT:	expected = 4;	break;
+		case CMD_BTN:	expected = 5;	break;
+		case CMD_POS:	expected = 6;	break;
+		case CMD_DBTN:	expected = 7;	break;
 		default:
-			dprint("unexpected cmd %02x\n", byte);
+			dprint("nxpd cmd %02X\n", byte);
 			expected = received = 0;
 			break;
 		}
@@ -103,7 +84,7 @@ bool Pedals::consume(const uint8_t byte)
 	}
 	else
 	{
-		dprint("unexpected %02x\n", byte);
+		dprint("nxpd %02X\n", byte);
 		received = expected = 0;
 	}
 
@@ -112,12 +93,16 @@ bool Pedals::consume(const uint8_t byte)
 
 PedalEvent Pedals::get_event()
 {
-	poll();
+	uint8_t byte = 0;
+	while (read_byte(byte)  &&  consume(byte))
+		parse_message();
 
 	// if we have no incoming message
-	if (received == 0)
+	if (received == 0			// no active reception
+		&&  events.empty()		// no unhandled events
+		&&  (REFRESH_DELAY == 0  ||  Watch::cnt() - last_reception > Watch::ms2ticks(REFRESH_DELAY)))
 	{
-		refresh_ftsw_num();
+		refresh_ftsw_display();
 		refresh_ftsw_leds();
 		refresh_exp_leds();
 	}
@@ -131,28 +116,53 @@ PedalEvent Pedals::get_event()
 void Pedals::reset()
 {
 	// TODO: this function should not block
+	
+	enable(false, false);	// disable RX and TX
+	
 	IoPin<'B', 4>::dir_out();	// TX is out
 	IoPin<'B', 4>::clear();		// lo
 	_delay_ms(1000);
 
 	IoPin<'B', 4>::dir_out();	// TX is out
 	IoPin<'B', 5>::dir_in();	// RX is in
+	
+	set_baud(31250);
+	enable(true, true);		// enable RX and TX
+	
+	clear();
 }
 
 void Pedals::clear()
 {
+	events.clear();
+	
 	received = expected = 0;
 
-	min = 0xffff;
-	max = 0;
+	clear_ftsw();
+	clear_exp();
+}
 
-	new_ftsw_number = FTSW_NUM_CLEAR;
+void Pedals::clear_ftsw()
+{
+	ftsw_error_cnt = 0;
+	ftsw_present = false;
 	ftsw_number = FTSW_NUM_UNKNOWN;
+	ftsw_leds = new_ftsw_leds + 1;
+	ftsw_btn1 = ftsw_btn2 = ftsw_btn3 = ftsw_btn4 = false;
+}
+
+void Pedals::clear_exp()
+{
+	exp_error_cnt = 0;
+	exp_present = false;
+	exp_leds = new_exp_leds + 1;
+	exp_btn = false;
+	exp_position = 0;
 }
 
 void Pedals::set_led(const PedalLED led)
 {
-	// expression or footswitch leds?
+	// expression or foot switch leds?
 	if (led > 7)
 		new_exp_leds |= (1 << (led - 8));
 	else
@@ -161,33 +171,40 @@ void Pedals::set_led(const PedalLED led)
 
 void Pedals::clear_led(const PedalLED led)
 {
-	// expression or footswitch leds?
+	// expression or foot switch leds?
 	if (led > 7)
 		new_exp_leds &= ~(1 << (led - 8));
 	else
 		new_ftsw_leds &= ~(1 << led);
 }
 
-void Pedals::update_state(const PedalEvent fired_event)
+PedalEvent ftsw_btn_change(const uint8_t* pchange)
 {
-	// get the rocket state
-	switch (fired_event)
+	const uint16_t change_code = *reinterpret_cast<const uint16_t*>(pchange);
+	
+	switch (change_code)
 	{
-	case evExpPosition:
-		// get the 14 bit position of the rocker
-		exp_position = receive[3];
-		exp_position <<= 7;
-		exp_position |= receive[4];
-
-		// update the range of the rocker (poor man's calibration)
-		if (exp_position < min) min = exp_position;
-		if (exp_position > max) max = exp_position;
-		
-		// subtract the minimum from the position
-		exp_position -= min;
+	case 0x7C7D:	return evFtswBtn4Down;
+	case 0x7D7D:	return evFtswBtn3Down;
+	case 0x7E7D:	return evFtswBtn2Down;
+	case 0x7F7D:	return evFtswBtn1Down;
+	case 0x7C7F:	return evFtswBtn4Up;
+	case 0x7D7F:	return evFtswBtn3Up;
+	case 0x7E7F:	return evFtswBtn2Up;
+	case 0x7F7F:	return evFtswBtn1Up;
+	case 0x7C:		return evExpBtnDown;
+	case 0x7E:		return evExpBtnUp;
+	default:
 		break;
-	case evFtswInit:		ftsw_present = true;		break;
-	case evExpInit:			exp_present = true;			break;
+	}
+	
+	return evNone;
+}
+
+void Pedals::update_button_state(const PedalEvent event)
+{
+	switch (event)
+	{
 	case evExpBtnDown:		exp_btn = true;				break;
 	case evExpBtnUp:		exp_btn = false;			break;
 	case evFtswBtn1Down:	ftsw_btn1 = true;			break;
@@ -203,71 +220,78 @@ void Pedals::update_state(const PedalEvent fired_event)
 	}
 }
 
-PedalEvent Pedals::parse_message()
+void Pedals::parse_message()
 {
-	// find the event in the table
-	PedalEvent fired_event = evNone;
-	uint8_t istream = 0;
-	uint8_t imsg = 0;
+	// checksum
+	uint8_t cs = 0;
+	for (uint8_t c = 1; c < received; c++)
+		cs ^= receive[c];
 
-	while (messages[imsg].get_event() != fired_event)
+	// confirm to the sender
+	send(cs == 0 ? ACK : ERROR);
+
+	expected = received = 0;
+
+	last_reception = Watch::cnt();
+
+	PedalEvent event = evNone;
+
+	if (receive[0] == CMD_INIT)
 	{
-		if (messages[imsg].get_stream(istream) == receive[istream])
+		if (receive[1] == ID_FTSW)
 		{
-			++istream;
+			event = evFtswInit;
+			ftsw_present = true;
 		}
-		else if (messages[imsg].get_stream(istream) < receive[istream])
+		else if (receive[1] == ID_EXP)
 		{
-			++imsg;
-			istream = 0;
-		}
-		else
-		{
-			break;
-		}
-
-		// completed a message?
-		if (istream == MAX_STREAM_BYTES
-			|| (messages[imsg].get_stream(istream) == ST_END  &&  istream))
-		{
-			// checksum
-			uint8_t cs = 0;
-			for (uint8_t c = 1; c < expected; c++)
-				cs ^= receive[c];
-
-			// confirm to the sender
-			send(cs == 0 ? ST_ACK : ST_NACK);
-
-			expected = received = 0;
-
-			if (cs == 0)
-			{
-				fired_event = messages[imsg].get_event();
-
-				update_state(fired_event);
-			}
-
-			break;
+			event = evExpInit;
+			exp_present = true;
 		}
 	}
-
-	return fired_event;
-}
-
-void Pedals::poll()
-{
-	uint8_t byte = 0;
-	while (read_byte(byte)  &&  consume(byte))
+	else if (receive[0] == CMD_BTN)
 	{
-		const PedalEvent ev = parse_message();
-		if (ev != evNone)
+		event = ftsw_btn_change(receive + 2);
+		update_button_state(event);
+	}
+	else if (receive[0] == CMD_DBTN)
+	{
+		event = evFtswDoubleBtn;
+	}
+	else if (receive[0] == CMD_POS)
+	{
+		event = evExpPosition;
+		
+		// get the 14 bit position of the rocker
+		exp_position = receive[3];
+		exp_position <<= 7;
+		exp_position |= receive[4];
+
+		// update the range of the rocker (poor man's calibration)
+		if (exp_position < min) min = exp_position;
+		if (exp_position > max) max = exp_position;
+		
+		// subtract the minimum from the position
+		exp_position -= min;
+	}
+
+	if (event != evNone)
+	{
+		if (!events.is_full())
+			events.push(event);
+
+		if (event == evFtswDoubleBtn)
 		{
-			if (events.is_full())
-			{
-				// TODO: error state
-			}
-				
-			events.push(ev);
+			const PedalEvent first = ftsw_btn_change(receive + 2);
+			const PedalEvent second = ftsw_btn_change(receive + 4);
+
+			update_button_state(first);
+			update_button_state(second);
+			
+			if (!events.is_full())
+				events.push(first);
+			if (!events.is_full())
+				events.push(second);
 		}
 	}
 }
@@ -305,7 +329,7 @@ bool Pedals::send_message()
 	while (!read_byte(ack))
 		;
 
-	if (ack == ST_ACK)
+	if (ack == ACK)
 		return true;
 
 	dprint("bad checksum 0x%02x\n", ack);
@@ -314,7 +338,7 @@ bool Pedals::send_message()
 	{
 		if (++ftsw_error_cnt == MAX_ERROR_CNT)
 		{
-			ftsw_present = false;
+			clear_ftsw();
 			if (!events.is_full())
 				events.push(evFtswOff);
 		}
@@ -324,7 +348,7 @@ bool Pedals::send_message()
 	{
 		if (++exp_error_cnt == MAX_ERROR_CNT)
 		{
-			exp_present = false;
+			clear_exp();
 			if (!events.is_full())
 				events.push(evExpOff);
 		}
@@ -338,7 +362,7 @@ void Pedals::refresh_ftsw_leds()
 	if (new_ftsw_leds != ftsw_leds  &&  ftsw_present)
 	{
 		// this message sets the individual LEDs on the foot switch
-		send_buff[0] = ST_LIGHTS;
+		send_buff[0] = CMD_LED;
 		send_buff[1] = ID_FTSW;
 		send_buff[2] = LED_FTSW;
 		send_buff[3] = new_ftsw_leds & 0x7F;
@@ -360,7 +384,7 @@ void Pedals::refresh_exp_leds()
 	if (new_exp_leds != exp_leds  &&  exp_present)
 	{
 		// this message sets the individual LEDs on the foot switch
-		send_buff[0] = ST_LIGHTS;
+		send_buff[0] = CMD_LED;
 		send_buff[1] = ID_EXP;
 		send_buff[2] = LED_EXP;
 		send_buff[3] = new_exp_leds;
@@ -374,12 +398,12 @@ void Pedals::refresh_exp_leds()
 	}
 }
 
-void Pedals::refresh_ftsw_num()
+void Pedals::refresh_ftsw_display()
 {
 	if (new_ftsw_number != ftsw_number  &&  ftsw_present)
 	{
 		// this message clears the LED display
-		send_buff[0] = ST_LIGHTS;
+		send_buff[0] = CMD_LED;
 		send_buff[1] = ID_FTSW;
 		send_buff[2] = LED_DISP2;
 		send_buff[3] = 0;

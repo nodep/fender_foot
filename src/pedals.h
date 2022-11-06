@@ -17,6 +17,7 @@ enum PedalEvent : uint8_t
 	evFtswBtn3Up,
 	evFtswBtn4Down,
 	evFtswBtn4Up,
+	evFtswDoubleBtn,
 	evFtswOff,
 	
 	evExpInit,
@@ -63,11 +64,8 @@ public:
 	Pedals()
 	{
 		reset();
-		
+	
 		clear();
-		
-		set_baud(31250);
-		enable(true, true);
 	}
 	
 	PedalEvent get_event();
@@ -92,6 +90,8 @@ public:
 
 	void reset();
 	void clear();
+	void clear_ftsw();
+	void clear_exp();
 	
 private:
 
@@ -109,6 +109,8 @@ private:
 	uint16_t	new_ftsw_number = FTSW_NUM_CLEAR;
 	uint8_t		new_ftsw_leds	= 0;
 	uint8_t		new_exp_leds	= 0;
+
+	uint16_t	last_reception	= 0;
 	
 	uint8_t		ftsw_error_cnt	= 0;
 	uint8_t		exp_error_cnt	= 0;
@@ -118,14 +120,13 @@ private:
 	uint8_t		send_buff[8];
 
 	bool consume(const uint8_t byte);
-	void update_state(const PedalEvent fired_event);
+	void update_button_state(const PedalEvent event);
 	bool send_message();
-	PedalEvent parse_message();
-	void poll();
+	void parse_message();
 	
 	bool send(const uint8_t b);
 	
-	void refresh_ftsw_num();
+	void refresh_ftsw_display();
 	void refresh_ftsw_leds();
 	void refresh_exp_leds();
 	

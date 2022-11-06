@@ -2,7 +2,21 @@
 
 #include <avr/io.h>
 
-template <uint8_t TimerNum>
+// #define TICKS2MS(ticks)		((ticks) * TIMER_PRESCALER / (F_CPU/1000))
+
+enum TimerA_Prescale
+{
+	div1 = TCA_SINGLE_CLKSEL_DIV1_gc,
+	div2 = TCA_SINGLE_CLKSEL_DIV2_gc,
+	div4 = TCA_SINGLE_CLKSEL_DIV4_gc,
+	div8 = TCA_SINGLE_CLKSEL_DIV8_gc,
+	div16 = TCA_SINGLE_CLKSEL_DIV16_gc,
+	div64 = TCA_SINGLE_CLKSEL_DIV64_gc,
+	div256 = TCA_SINGLE_CLKSEL_DIV256_gc,
+	div1024 = TCA_SINGLE_CLKSEL_DIV1024_gc,
+};
+
+template <uint8_t TimerNum, TimerA_Prescale div>
 class TimerA
 {
 private:
@@ -12,18 +26,6 @@ private:
 	}
 
 public:
-
-	enum ClockDivs_e
-	{
-		div1 = TCA_SINGLE_CLKSEL_DIV1_gc,
-		div2 = TCA_SINGLE_CLKSEL_DIV2_gc,
-		div4 = TCA_SINGLE_CLKSEL_DIV4_gc,
-		div8 = TCA_SINGLE_CLKSEL_DIV8_gc,
-		div16 = TCA_SINGLE_CLKSEL_DIV16_gc,
-		div64 = TCA_SINGLE_CLKSEL_DIV64_gc,
-		div256 = TCA_SINGLE_CLKSEL_DIV256_gc,
-		div1024 = TCA_SINGLE_CLKSEL_DIV1024_gc,
-	};
 
 	static void start()
 	{
@@ -35,11 +37,33 @@ public:
 		get_tca().CTRLA &= ~TCA_SINGLE_ENABLE_bm;
 	}
 
-	static void set_clock_div(const ClockDivs_e div)
+	static void set_prescale()
 	{
 		get_tca().CTRLA = static_cast<uint8_t>((get_tca().CTRLA & 0x81) | div);
 	}
 
+	static uint16_t ms2ticks(const uint16_t ms)
+	{
+		if (div == div1)
+			return ms * (F_CPU/1000) / 1;
+		else if (div == div2)
+			return ms * (F_CPU/1000) / 2;
+		else if (div == div4)
+			return ms * (F_CPU/1000) / 4;
+		else if (div == div8)
+			return ms * (F_CPU/1000) / 8;
+		else if (div == div16)
+			return ms * (F_CPU/1000) / 16;
+		else if (div == div64)
+			return ms * (F_CPU/1000) / 64;
+		else if (div == div256)
+			return ms * (F_CPU/1000) / 256;
+		else if (div == div1024)
+			return ms * (F_CPU/1000) / 1024;
+			
+		return 0;
+	}
+	
 	static register16_t& cnt()
 	{
 		return get_tca().CNT;
