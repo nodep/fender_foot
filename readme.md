@@ -8,7 +8,7 @@ I also have a Fender Mustang III with its 4 button foot switch (MS-4) and the ex
 
 So this is the result of my little adventure. :)
 
-[Fender claims](https://tone-support.fender.com/hc/en-us/articles/115003535766-Will-my-MS-4-or-ULT-4-4-Button-foot switch-work-with-my-Mustang-GT-amplifier-) that the 4 button foot switches for previous versions of their modeling amps (G-DEC 30 (ULT-4) and Mustang III, IV and V (MS-4)) are compatible with Mustang GT (MGT-4), meaning you can use the older foot switche with the Mustang GT amps. I don't know if this means that this protocol description also applies to these other foot switch pedals, but I strongly suspect it does at least in part.
+[Fender claims](https://tone-support.fender.com/hc/en-us/articles/115003535766-Will-my-MS-4-or-ULT-4-4-Button-foot) that the 4 button foot switches for previous versions of their modeling amps (G-DEC 30 (ULT-4) and Mustang III, IV and V (MS-4)) are compatible with Mustang GT (MGT-4), meaning you can use the older foot switche with the Mustang GT amps. I don't know if this means that this protocol description also applies to these other foot switch pedals, but I strongly suspect it does at least in part.
 
 Fender's latest range of modeling amplifiers (Mustang GTX) also has a new foot switch pedal (GTX-7). It has 7 buttons (instead of only 4 on the older ones), but it has the same cable, the same number of individual LEDs (8) and the same 3 digit 7 segment LED display. I can't be sure until I test it, but I have a strong feeling that the protocol for GTX-7 is an extension of the protocol described here.
 
@@ -18,7 +18,7 @@ This description does not apply to Fender's 2 button foot switches.
 
 The MS-4 and/or EXP-1 are connected to the amp with a standard 1/4 inch mono jack and cable. The sleeve of the jack is connected to the ground, and the tip powers the pedals (3.3V) and also carries the data between the pedals and the amp. The following image shows the relevant part of the amp's circuit which is responsible for interfacing with the pedals:
 
-![alt text](images/4_button_foot switch.png)
+![interface circuit](images/4_button_foot switch.png)
 
 The main thing here are the two OR logic gates connected in parallel. 74LVC2G32 can output 50mA per channel, which is a little more than usual for a logic gate, and I am guessing that is the reason why they chose it. Connecting them in parallel allows the pedals to be powered by up to 100mA. The tip of the jack is connected to 4BTFS. There is also a Schmitt trigger (SN74LVC1G17) which clears up the noise coming in through the cable that the pedals are connected to. I have no idea why they are powering the Schmitt trigger with 5V and then dropping its output with the voltage divider to around 3.3V. Your guess is as good as mine.
 
