@@ -18,7 +18,7 @@ This description does not apply to Fender's 2 button foot switches.
 
 The MS-4 and/or EXP-1 are connected to the amp with a standard 1/4 inch mono jack and cable. The sleeve of the jack is connected to the ground, and the tip powers the pedals (3.3V) and also carries the data between the pedals and the amp. The following image shows the relevant part of the amp's circuit which is responsible for interfacing with the pedals:
 
-![interface circuit](images/4_button_foot switch.png)
+![interface circuit](images/4_button_footswitch.png)
 
 The main thing here are the two OR logic gates connected in parallel. 74LVC2G32 can output 50mA per channel, which is a little more than usual for a logic gate, and I am guessing that is the reason why they chose it. Connecting them in parallel allows the pedals to be powered by up to 100mA. The tip of the jack is connected to 4BTFS. There is also a Schmitt trigger (SN74LVC1G17) which clears up the noise coming in through the cable that the pedals are connected to. I have no idea why they are powering the Schmitt trigger with 5V and then dropping its output with the voltage divider to around 3.3V. Your guess is as good as mine.
 
