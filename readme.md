@@ -26,13 +26,21 @@ PB10 is connected to the TX pin, and PB11 to the RX pin of the microcontroller.
 
 ## Communication
 
-The amp and the pedals communicate over a USART bus clocked at 31250 baud which seems to be the standard MIDI baud rate. 
+The amp and the pedals communicate over a USART bus clocked at 31250 baud which seems to be the standard MIDI baud rate.
 
 Because there is only one line for both TX and RX, everything that a sender transmits over TX will also be seen on its RX. Therefore, the software of the transmitter must ignore one byte received on RX for every byte transmitted on TX to maintain synchronization.
 
 ## Protocol
 
-The protocol consists of several kinds of messages transmitted from a pedal to the amp or vice versa. Every message begins with a command byte followed by several bytes of payload, and a single byte checksum. The command byte always has its high order bit set, while the payload bytes and checksum have the high order bit cleared. This is how you can recognize the beginning of a new message. The checksum is calculated by XOR-ing all the bytes of the payload. A message must be acknowledged by the receiver with an ACK byte (0xFD) or an error byte (0xFE) in case of bad checksum.
+The protocol consists of several kinds of messages transmitted from a pedal to the amp or vice versa. Every message begins with a command byte followed by several bytes of payload, and a single byte checksum. The command byte always has its high order bit set, while the payload bytes and checksum have the high order bit cleared. This is how you can recognize the beginning of a new message. The checksum is calculated by XOR-ing all the bytes of the payload. A message must be acknowledged by the receiver with an ACK byte (0xFD) or an error byte (0xFE) in case of bad checksum. The following lists all command bytes and their meanings:
+
+| command | description
+|---------|-------------
+| F8      | LED message
+| FA      | Double button message
+| FB      | Expression pedal position message
+| FC      | Button message
+| FD      | Pedal init message
 
 ## Messages
 
@@ -58,18 +66,18 @@ The init messages are sent by the pedal to the amp when the pedal is powered up.
 
 These notify the amp that the state of a button has been changed. The payload begins with a pedal ID (0x08 or 0x0C). The following 2 bytes identify the button and if the button was pressed or released. The following table lists the possible combinations:
 
-| pedal | event | description
+| event | pedal | description
 |-------|-------|-------------
-| MS-4  | 7D 7C | button 4 was pressed (QA3)
-| MS-4  | 7D 7D | button 3 was pressed (QA2)
-| MS-4  | 7D 7E | button 2 was pressed (QA1)
-| MS-4  | 7D 7F | button 1 was pressed (Mode/Tuner)
-| MS-4  | 7F 7C | button 4 was released (QA3)
-| MS-4  | 7F 7D | button 3 was released (QA2)
-| MS-4  | 7F 7E | button 2 was released (QA1)
-| MS-4  | 7F 7F | button 1 was released (Mode/Tuner)
-| EXP-1 | 7C 00 | button was pressed
-| EXP-1 | 7E 00 | button was released
+| 7D 7C | MS-4  | button 4 was pressed (QA3)
+| 7D 7D | MS-4  | button 3 was pressed (QA2)
+| 7D 7E | MS-4  | button 2 was pressed (QA1)
+| 7D 7F | MS-4  | button 1 was pressed (Mode/Tuner)
+| 7F 7C | MS-4  | button 4 was released (QA3)
+| 7F 7D | MS-4  | button 3 was released (QA2)
+| 7F 7E | MS-4  | button 2 was released (QA1)
+| 7F 7F | MS-4  | button 1 was released (Mode/Tuner)
+| 7C 00 | EXP-1 | button was pressed
+| 7E 00 | EXP-1 | button was released
 
 ### Double button message
 
@@ -87,7 +95,7 @@ This notifies the amp that the position of the rocker on the expression pedal ha
 
 ### LED messages
 
-These are sent from the amp to the pedal to update the state of the LEDs and the 3 character display on the foot switch pedal. The payload starts with the usual pedal identifier (0x08 or 0x0C) which is followed by 6 bytes grouped into 3 groups of 2 bytes each. Bit 1 though 6 of the first byte in each group signify which LEDs will be changed (the selector of the LEDs), while the least significant bit of the first byte and the lower 7 bits of the second byte hold the new values for the selected LEDs. 
+These are sent from the amp to the pedal to update the state of the LEDs and the 3 character display on the foot switch pedal. The payload starts with the usual pedal identifier (0x08 or 0x0C) which is followed by 6 bytes grouped into 3 groups of 2 bytes each. Bit 1 though 6 of the first byte in each group signify which LEDs will be changed (the selector of the LEDs), while the least significant bit of the first byte and the lower 7 bits of the second byte hold the new values for the selected LEDs.
 
 | byte 1 (selector) | byte 2 (value) | description
 |-------------------|----------------|-------------
@@ -95,7 +103,7 @@ These are sent from the amp to the pedal to update the state of the LEDs and the
 
 The LEDs selector values:
 
-| selector | description                  
+| selector | description
 |----------|-------------
 | 0x70     | single LEDs on MS-4 and EXP-1
 | 0x72     | first digit on MS-4 display
@@ -104,12 +112,12 @@ The LEDs selector values:
 
 The following table shows which bit of the selector and value bytes maps to which LEDs for group selector 0x70 (individual LEDs):
 
-| bit | byte     | pedal | LED 
+| bit | byte     | pedal | LED
 |-----|----------|-------|-----
 | 0   | value    | MS-4  | the red LED above button 4 (QA3)
 | 1   | value    | MS-4  | the yellow LED for mode 3
 | 2   | value    | MS-4  | the red LED above button 3 (QA2)
-| 3   | value    | MS-4  | the green LED between the 3 number display and the Fender logo 
+| 3   | value    | MS-4  | the green LED between the 3 number display and the Fender logo
 | 4   | value    | MS-4  | the red LED above button 2 (QA1)
 | 5   | value    | MS-4  | the red LED for mode 1
 | 6   | value    | MS-4  | the red LED above button 2 (mode/tuner)

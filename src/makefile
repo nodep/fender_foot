@@ -1,12 +1,13 @@
 TARGET  = fender_foot
 DEVICE  = avr128da48
 
-F_CPU   = 4000000
+# get us up to 24MHz; warp speed!
+F_CPU   = 24000000
 
-# Get AVRDUDE here: https://github.com/mariusgreuel/avrdude
+# Get avrdude here: https://github.com/mariusgreuel/avrdude
 AVRDUDE = avrdude -c pkobn_updi -p $(DEVICE)
 
-CFLAGS	= -Wall -Os -DF_CPU=$(F_CPU)
+CFLAGS  = -Wall -Os -DF_CPU=$(F_CPU)
 CFLAGS += -D_DEBUG
 
 LFLAGS  = -Wl,--relax
@@ -14,6 +15,8 @@ LFLAGS  = -Wl,--relax
 
 # I used AVR Toolchain 3.7 and the latest AVR-Dx pack:
 # https://packs.download.microchip.com/
+# You need to copy the include files, device specs and .o files
+# from the pack to the avr-gcc respective directories
 COMPILE = avr-g++ -mmcu=$(DEVICE) $(CFLAGS)
 
 OBJECTS = main.o avrdbg.o pedals.o

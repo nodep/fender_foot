@@ -27,7 +27,7 @@ const uint8_t LED_DISP1	= 0x74;	// middle digit on the LED display
 const uint8_t LED_DISP0	= 0x76;	// right digit on the LED display
 const uint8_t LED_EXP	= 0x70;	// the LEDS on the foot switch
 
-const bool SHOW_LEADING_ZEROS = true;
+const bool SHOW_LEADING_ZEROS = false;
 
 enum
 {
@@ -39,6 +39,7 @@ enum
 	REFRESH_DELAY = 0,
 };
 
+// these are LED values representing numbers
 static const uint8_t digit_segments[10] PROGMEM =
 {
 	0x5F,			// 0
@@ -110,26 +111,26 @@ PedalEvent Pedals::get_event()
 void Pedals::reset()
 {
 	// TODO: this function should not block
-	
+
 	enable(false, false);	// disable RX and TX
-	
+
 	IoPin<'B', 4>::dir_out();	// TX is out
 	IoPin<'B', 4>::clear();		// lo
 	_delay_ms(1000);
 
 	IoPin<'B', 4>::dir_out();	// TX is out
 	IoPin<'B', 5>::dir_in();	// RX is in
-	
+
 	set_baud(31250);
 	enable(true, true);		// enable RX and TX
-	
+
 	clear();
 }
 
 void Pedals::clear()
 {
 	events.clear();
-	
+
 	received = expected = 0;
 
 	clear_ftsw();
@@ -140,11 +141,11 @@ void Pedals::clear_ftsw()
 {
 	ftsw_error_cnt = 0;
 	ftsw_present = false;
-	
+
 	// these force a refresh of LEDs
 	ftsw_number = FTSW_NUM_UNKNOWN;
 	ftsw_leds = new_ftsw_leds + 1;
-	
+
 	ftsw_btn1 = ftsw_btn2 = ftsw_btn3 = ftsw_btn4 = false;
 }
 
@@ -155,7 +156,7 @@ void Pedals::clear_exp()
 
 	// these force a refresh of LEDs
 	exp_leds = new_exp_leds + 1;
-	
+
 	exp_btn = false;
 	exp_position = 0;
 }
@@ -181,7 +182,7 @@ void Pedals::clear_led(const PedalLED led)
 PedalEvent ftsw_btn_change(const uint8_t* pchange)
 {
 	const uint16_t change_code = *reinterpret_cast<const uint16_t*>(pchange);
-	
+
 	switch (change_code)
 	{
 	case 0x7C7D:	return evFtswBtn4Down;
@@ -197,7 +198,7 @@ PedalEvent ftsw_btn_change(const uint8_t* pchange)
 	default:
 		break;
 	}
-	
+
 	return evNone;
 }
 
@@ -264,7 +265,7 @@ void Pedals::parse_message()
 	else if (receive[0] == CMD_POS)
 	{
 		event = evExpPosition;
-		
+
 		// get the 14 bit position of the rocker
 		exp_position = receive[3];
 		exp_position <<= 7;
@@ -273,7 +274,7 @@ void Pedals::parse_message()
 		// update the range of the rocker (poor man's calibration)
 		if (exp_position < min) min = exp_position;
 		if (exp_position > max) max = exp_position;
-		
+
 		// subtract the minimum from the position
 		exp_position -= min;
 	}
@@ -290,7 +291,7 @@ void Pedals::parse_message()
 
 			update_button_state(first);
 			update_button_state(second);
-			
+
 			if (!events.is_full())
 				events.push(first);
 			if (!events.is_full())
@@ -314,13 +315,13 @@ bool Pedals::send(const uint8_t b)
 		{
 			if (b != d)
 				dprint("send failed:%02X d:%02X\n", b, d);
-			
+
 			return b == d;
 		}
 	}
-	
+
 	dprint("send timeout\n");
-	
+
 	return false;
 }
 
@@ -332,7 +333,7 @@ bool Pedals::send_message()
 	{
 		if (!send(b))
 			return false;
-		
+
 		checksum ^= b;
 	}
 
@@ -352,14 +353,14 @@ bool Pedals::send_message()
 					ftsw_error_cnt = 0;
 				else if (send_buff[1] == ID_EXP)
 					exp_error_cnt = 0;
-				
+
 				return true;
 			}
-			
+
 			byte_read = true;
-			
+
 			dprint("bad checksum 0x%02x\n", ack);
-			
+
 			break;
 		}
 	}
@@ -367,7 +368,7 @@ bool Pedals::send_message()
 	if (!byte_read)
 		dprint("ack timeout\n");
 
-	// check if we have too many errors and 
+	// check if we have too many errors and
 	// need to give up on a pedal
 	if (send_buff[1] == ID_FTSW)
 	{
@@ -378,7 +379,7 @@ bool Pedals::send_message()
 				events.push(evFtswOff);
 		}
 	}
-		
+
 	if (send_buff[1] == ID_EXP)
 	{
 		if (++exp_error_cnt == MAX_ERROR_CNT)
@@ -388,7 +389,7 @@ bool Pedals::send_message()
 				events.push(evExpOff);
 		}
 	}
-	
+
 	return false;
 }
 
@@ -405,7 +406,7 @@ void Pedals::refresh_ftsw_leds()
 		send_buff[5] = 0;
 		send_buff[6] = 0;
 		send_buff[7] = 0;
-		
+
 		if (new_ftsw_leds & 0x80)
 			send_buff[2] = LED_FTSW + 1;
 
@@ -427,7 +428,7 @@ void Pedals::refresh_exp_leds()
 		send_buff[5] = 0;
 		send_buff[6] = 0;
 		send_buff[7] = 0;
-		
+
 		if (send_message())
 			exp_leds = new_exp_leds;
 	}
@@ -457,7 +458,7 @@ void Pedals::refresh_ftsw_display()
 			d2 /= 10;
 
 			uint8_t segments;
-			
+
 			if (SHOW_LEADING_ZEROS  ||  d2)
 			{
 				segments = pgm_read_byte(&digit_segments[d2]);

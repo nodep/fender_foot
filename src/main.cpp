@@ -16,9 +16,26 @@ using btn = IoPin<'C', 7>;
 // init the CPU clock and PORTMUX
 void hw_init()
 {
-	// get us up to 24MHz; warp speed!
-	//CPU_CCP = CCP_IOREG_gc;
-	//CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
+	CPU_CCP = CCP_IOREG_gc;
+#if   F_CPU == 1000000
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_1M_gc;
+#elif F_CPU == 2000000
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_2M_gc;
+#elif F_CPU == 3000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_3M_gc;
+#elif F_CPU == 8000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_8M_gc;
+#elif F_CPU == 12000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_12M_gc;
+#elif F_CPU == 16000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_16M_gc;
+#elif F_CPU == 20000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_20M_gc;
+#elif F_CPU == 24000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
+#else
+	// default 4MHz: no need to set anything
+#endif
 
 	// TimerA 1 PWM to PORTC
 	PORTMUX.TCAROUTEA = PORTMUX_TCA1_0_bm;
@@ -35,6 +52,9 @@ int main()
 	dbgInit();
 	dprint("\nI live...\n");
 
+	dprinti(Watch::ms2ticks(100));
+	dprinti(Watch::ticks2ms(2343));
+
 	// config the on-board LED and button
 	led::dir_out();
 	led::invert();
@@ -47,7 +67,7 @@ int main()
 	Watch::start();
 
 	Pedals pedals;
-	
+
 	uint8_t mode = 0;
 	uint16_t num = 0;
 	while (true)
@@ -59,19 +79,19 @@ int main()
 				pedals.set_led(ledFtswMiddle);
 			else
 				pedals.clear_led(ledFtswMiddle);
-				
+
 			if (event == evFtswBtn1Down)
 			{
 				pedals.set_led(ledFtswModeTuner);
 				pedals.set_led(ledExpGreen);
-				
+
 				if (++mode == 4)
 					mode = 1;
-				
+
 				pedals.clear_led(ledFtswMode1);
 				pedals.clear_led(ledFtswMode2);
 				pedals.clear_led(ledFtswMode3);
-				
+
 				if (mode == 1)
 					pedals.set_led(ledFtswMode1);
 				else if (mode == 2)
