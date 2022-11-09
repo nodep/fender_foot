@@ -5,6 +5,8 @@ template <class T, uint8_t Capacity>
 class ring
 {
 private:
+	static_assert(Capacity < 0x100);
+
     T store[Capacity];
     uint8_t head = 0;
     uint8_t tail = 0;

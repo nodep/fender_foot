@@ -58,13 +58,13 @@ public:
 			return 2;
 		else if constexpr(prescale == div4)
 			return 4;
-		else if constexpr (prescale == div8)
+		else if constexpr(prescale == div8)
 			return 8;
-		else if constexpr (prescale == div16)
+		else if constexpr(prescale == div16)
 			return 16;
-		else if constexpr (prescale == div64)
+		else if constexpr(prescale == div64)
 			return 64;
-		else if constexpr (prescale == div256)
+		else if constexpr(prescale == div256)
 			return 256;
 
 		// default is div1024

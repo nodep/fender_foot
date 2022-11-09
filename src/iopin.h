@@ -8,8 +8,8 @@ class IoPin
 protected:
 
 	static_assert(Port >= 'A'  &&  Port <= 'F', "Bad Port in IoPin template argument");
-	static_assert(PinNum <= 7, "Bad pin number on IoPin");
-	
+	static_assert(PinNum <= 7, "Bad pin number n IoPin template argument");
+
 	//////////////////
 	// helpers
 	//////////////////
@@ -22,11 +22,11 @@ protected:
 	{
 		return (&VPORTA)[Port - 'A'];
 	}
-	
-	static const uint8_t bitmask = 1 << PinNum;
+
+	static constexpr uint8_t bitmask = 1 << PinNum;
 
 public:
-	
+
 	//////////////////
 	// configuration
 	//////////////////
@@ -44,12 +44,12 @@ public:
 	{
 		get_pinctrl() |= PORT_INVEN_bm;
 	}
-	
+
 	static void non_invert()
 	{
 		get_pinctrl() &= ~PORT_INVEN_bm;
 	}
-	
+
 	//////////////////
 	// output
 	//////////////////
@@ -67,7 +67,7 @@ public:
 	{
 		get_vport().IN |= bitmask;
 	}
-	
+
 	static void set_value(const bool value)
 	{
 		if (value)
@@ -83,12 +83,12 @@ public:
 	{
 		return get_vport().IN & bitmask;
 	}
-	
+
 	static void pullup()
 	{
 		get_pinctrl() |= PORT_PULLUPEN_bm;
 	}
-	
+
 	static void pullup_off()
 	{
 		get_pinctrl() &= ~PORT_PULLUPEN_bm;
