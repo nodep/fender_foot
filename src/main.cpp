@@ -52,9 +52,6 @@ int main()
 	dbgInit();
 	dprint("\nI live...\n");
 
-	dprinti(Watch::ms2ticks(100));
-	dprinti(Watch::ticks2ms(2343));
-
 	// config the on-board LED and button
 	led::dir_out();
 	led::invert();
@@ -141,8 +138,11 @@ int main()
 			}
 			else if (event == evExpPosition)
 			{
-				dprint("pos %d\n", pedals.exp_position);
-				pedals.set_ftsw_number(pedals.exp_position >> 3);
+				if (!pedals.ftsw_present)
+					dprint("pos %d\n", pedals.exp_position);
+				
+				num = static_cast<uint16_t>(pedals.exp_position >> 3);
+				pedals.set_ftsw_number(num);
 			}
 			else if (event == evExpBtnDown)
 			{

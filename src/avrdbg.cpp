@@ -48,7 +48,7 @@ void printi(uint32_t i)
 	buff[10] = '\0';
 	for (uint8_t cnt = 9; cnt <= 9  &&  i; --cnt)
 	{
-		buff[cnt] = '0' + i % 10;
+		buff[cnt] = '0' + static_cast<char>(i % 10);
 		if (buff[cnt] != '0')
 			start = buff + cnt;
 		i /= 10;

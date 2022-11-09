@@ -56,7 +56,8 @@ static const uint8_t digit_segments[10] PROGMEM =
 
 bool Pedals::consume(const uint8_t byte)
 {
-	if (is_status(byte))
+	// is this a command byte?
+	if (byte & 0x80)
 	{
 		receive[0] = byte;
 		received = 1;
@@ -92,10 +93,9 @@ PedalEvent Pedals::get_event()
 	while (read_byte(byte)  &&  consume(byte))
 		parse_message();
 
-	// if we have no incoming message
 	if (received == 0			// no active reception
 		&&  events.empty()		// no unhandled events
-		&&  (REFRESH_DELAY == 0  ||  Watch::cnt() - last_reception > Watch::ms2ticks(REFRESH_DELAY)))
+		&&  (REFRESH_DELAY == 0  ||  Watch::ms_passed_since(REFRESH_DELAY, last_reception)))
 	{
 		refresh_ftsw_display();
 		refresh_ftsw_leds();
@@ -116,6 +116,7 @@ void Pedals::reset()
 
 	IoPin<'B', 4>::dir_out();	// TX is out
 	IoPin<'B', 4>::clear();		// lo
+
 	_delay_ms(1000);
 
 	IoPin<'B', 4>::dir_out();	// TX is out
@@ -144,7 +145,7 @@ void Pedals::clear_ftsw()
 
 	// these force a refresh of LEDs
 	ftsw_number = FTSW_NUM_UNKNOWN;
-	ftsw_leds = new_ftsw_leds + 1;
+	ftsw_leds = static_cast<uint8_t>(new_ftsw_leds + 1);
 
 	ftsw_btn1 = ftsw_btn2 = ftsw_btn3 = ftsw_btn4 = false;
 }
@@ -155,7 +156,7 @@ void Pedals::clear_exp()
 	exp_present = false;
 
 	// these force a refresh of LEDs
-	exp_leds = new_exp_leds + 1;
+	exp_leds = static_cast<uint8_t>(new_exp_leds + 1);
 
 	exp_btn = false;
 	exp_position = 0;
@@ -233,7 +234,7 @@ void Pedals::parse_message()
 
 	expected = received = 0;
 
-	if (REFRESH_DELAY != 0)
+	if constexpr(REFRESH_DELAY != 0)
 		last_reception = Watch::cnt();
 
 	PedalEvent event = evNone;
@@ -272,17 +273,16 @@ void Pedals::parse_message()
 		exp_position |= receive[4];
 
 		// update the range of the rocker (poor man's calibration)
-		if (exp_position < min) min = exp_position;
-		if (exp_position > max) max = exp_position;
+		if (exp_position < min_pos) min_pos = exp_position;
+		if (exp_position > max_pos) max_pos = exp_position;
 
 		// subtract the minimum from the position
-		exp_position -= min;
+		exp_position -= min_pos;
 	}
 
 	if (event != evNone)
 	{
-		if (!events.is_full())
-			events.push(event);
+		events.safe_push(event);
 
 		if (event == evFtswDoubleBtn)
 		{
@@ -292,10 +292,8 @@ void Pedals::parse_message()
 			update_button_state(first);
 			update_button_state(second);
 
-			if (!events.is_full())
-				events.push(first);
-			if (!events.is_full())
-				events.push(second);
+			events.safe_push(first);
+			events.safe_push(second);
 		}
 	}
 }
@@ -308,7 +306,7 @@ bool Pedals::send(const uint8_t b)
 	// wait for the byte to appear on RX because
 	// these are connected on the same bus
 	const uint16_t started = Watch::cnt();
-	while (Watch::cnt() - started < Watch::ms2ticks(2))
+	while (!Watch::ms_passed_since(1, started))
 	{
 		uint8_t d = 0;
 		if (read_byte(d))
@@ -322,7 +320,7 @@ bool Pedals::send(const uint8_t b)
 
 	dprint("send timeout\n");
 
-	return false;
+	return true;
 }
 
 bool Pedals::send_message()
@@ -343,7 +341,7 @@ bool Pedals::send_message()
 	const uint16_t started = Watch::cnt();
 	uint8_t ack = 0;
 	bool byte_read = false;
-	while (Watch::cnt() - started < Watch::ms2ticks(2))
+	while (!Watch::ms_passed_since(2, started))
 	{
 		if (read_byte(ack))
 		{
@@ -359,7 +357,7 @@ bool Pedals::send_message()
 
 			byte_read = true;
 
-			dprint("bad checksum 0x%02x\n", ack);
+			dprint("bad checksum %02x\n", ack);
 
 			break;
 		}
@@ -375,18 +373,15 @@ bool Pedals::send_message()
 		if (++ftsw_error_cnt == MAX_ERROR_CNT)
 		{
 			clear_ftsw();
-			if (!events.is_full())
-				events.push(evFtswOff);
+			events.safe_push(evFtswOff);
 		}
 	}
-
-	if (send_buff[1] == ID_EXP)
+	else if (send_buff[1] == ID_EXP)
 	{
 		if (++exp_error_cnt == MAX_ERROR_CNT)
 		{
 			clear_exp();
-			if (!events.is_full())
-				events.push(evExpOff);
+			events.safe_push(evExpOff);
 		}
 	}
 
@@ -401,7 +396,7 @@ void Pedals::refresh_ftsw_leds()
 		send_buff[0] = CMD_LED;
 		send_buff[1] = ID_FTSW;
 		send_buff[2] = LED_FTSW;
-		send_buff[3] = new_ftsw_leds & 0x7F;
+		send_buff[3] = static_cast<uint8_t>(new_ftsw_leds & 0x7F);
 		send_buff[4] = 0;
 		send_buff[5] = 0;
 		send_buff[6] = 0;
@@ -452,9 +447,9 @@ void Pedals::refresh_ftsw_display()
 		// to clear the display, but show a number instead
 		if (new_ftsw_number != FTSW_NUM_CLEAR)
 		{
-			uint8_t d0 = new_ftsw_number % 10;
+			uint8_t d0 = static_cast<uint8_t>(new_ftsw_number % 10);
 			uint8_t d2 = static_cast<uint8_t>(new_ftsw_number / 10);
-			uint8_t d1 = d2 % 10;
+			uint8_t d1 = static_cast<uint8_t>(d2 % 10);
 			d2 /= 10;
 
 			uint8_t segments;
@@ -464,7 +459,7 @@ void Pedals::refresh_ftsw_display()
 				segments = pgm_read_byte(&digit_segments[d2]);
 				if (segments & 0x80)
 					send_buff[2] = LED_DISP2 + 1;
-				send_buff[3] = segments & 0x7f;
+				send_buff[3] = static_cast<uint8_t>(segments & 0x7f);
 			}
 
 			if (SHOW_LEADING_ZEROS  ||  d1  ||  d2)
@@ -472,13 +467,13 @@ void Pedals::refresh_ftsw_display()
 				segments = pgm_read_byte(&digit_segments[d1]);
 				if (segments & 0x80)
 					send_buff[4] = LED_DISP1 + 1;
-				send_buff[5] = segments & 0x7f;
+				send_buff[5] = static_cast<uint8_t>(segments & 0x7f);
 			}
 
 			segments = pgm_read_byte(&digit_segments[d0]);
 			if (segments & 0x80)
 				send_buff[6] = LED_DISP0 + 1;
-			send_buff[7] = segments & 0x7f;
+			send_buff[7] = static_cast<uint8_t>(segments & 0x7f);
 		}
 
 		if (send_message())

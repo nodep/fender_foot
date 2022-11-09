@@ -54,18 +54,16 @@ public:
 	bool		ftsw_btn2 = false;
 	bool		ftsw_btn3 = false;
 	bool		ftsw_btn4 = false;
-	bool		exp_btn = false;
 	uint16_t	exp_position = 0;
+	bool		exp_btn = false;
 
-	uint8_t		ftsw_leds = 0;
-	uint16_t	ftsw_number = 0;
 	uint8_t		exp_leds = 0;
+	uint16_t	ftsw_number = 0;
+	uint8_t		ftsw_leds = 0;
 
 	Pedals()
 	{
 		reset();
-
-		clear();
 	}
 
 	PedalEvent get_event();
@@ -96,15 +94,16 @@ public:
 private:
 
 	enum {
-		FTSW_NUM_UNKNOWN = 0xfffe,
-		FTSW_NUM_CLEAR = 0xffff,
+		FTSW_NUM_UNKNOWN	= 0xfffe,
+		FTSW_NUM_CLEAR		= 0xffff,
 	};
 
-	uint8_t		receive[8];
 	uint8_t		received = 0;
+	uint8_t		receive[7];
 	uint8_t		expected = 0;
-	uint16_t	min = 0xffff;
-	uint16_t	max = 0;
+
+	uint16_t	min_pos = 0xffff;
+	uint16_t	max_pos = 0;
 
 	uint16_t	new_ftsw_number = FTSW_NUM_CLEAR;
 	uint8_t		new_ftsw_leds	= 0;
@@ -129,9 +128,4 @@ private:
 	void refresh_ftsw_display();
 	void refresh_ftsw_leds();
 	void refresh_exp_leds();
-
-	static bool is_status(const uint8_t b)
-	{
-		return b & 0x80;
-	}
 };

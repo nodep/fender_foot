@@ -21,8 +21,8 @@ public:
 
 	static void enable(const bool tx, const bool rx)
 	{
-		get_usart().CTRLB =   (rx ? USART_RXEN_bm : 0)
-							| (tx ? USART_TXEN_bm : 0);
+		get_usart().CTRLB = static_cast<uint8_t>( (rx ? USART_RXEN_bm : 0)
+												| (tx ? USART_TXEN_bm : 0) );
 	}
 
 	static void send_byte(const uint8_t b)

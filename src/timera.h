@@ -14,7 +14,7 @@ enum TimerA_Prescale
 	div1024 = TCA_SINGLE_CLKSEL_DIV1024_gc,
 };
 
-template <uint8_t TimerNum, TimerA_Prescale div>
+template <uint8_t TimerNum, TimerA_Prescale prescale>
 class TimerA
 {
 private:
@@ -37,52 +37,7 @@ public:
 
 	static void set_prescale()
 	{
-		get_tca().CTRLA = static_cast<uint8_t>((get_tca().CTRLA & 0x81) | div);
-	}
-
-	// beware overflows!
-	static uint16_t ticks2ms(const uint16_t ticks)
-	{
-		if (div == div1)
-			return ticks / (F_CPU/1000);
-		else if (div == div2)
-			return ticks * 2 / (F_CPU/1000);
-		else if (div == div4)
-			return ticks * 4 / (F_CPU/1000);
-		else if (div == div8)
-			return ticks * 8 / (F_CPU/1000);
-		else if (div == div16)
-			return ticks * 16 / (F_CPU/1000);
-		else if (div == div64)
-			return ticks * 64 / (F_CPU/1000);
-		else if (div == div256)
-			return ticks * 256 / (F_CPU/1000);
-		else if (div == div1024)
-			return ticks * 1024 / (F_CPU/1000);
-
-		return 0;
-	}
-
-	static uint16_t ms2ticks(const uint16_t ms)
-	{
-		if (div == div1)
-			return ms * (F_CPU/1000);
-		else if (div == div2)
-			return ms * (F_CPU/1000) / 2;
-		else if (div == div4)
-			return ms * (F_CPU/1000) / 4;
-		else if (div == div8)
-			return ms * (F_CPU/1000) / 8;
-		else if (div == div16)
-			return ms * (F_CPU/1000) / 16;
-		else if (div == div64)
-			return ms * (F_CPU/1000) / 64;
-		else if (div == div256)
-			return ms * (F_CPU/1000) / 256;
-		else if (div == div1024)
-			return ms * (F_CPU/1000) / 1024;
-
-		return 0;
+		get_tca().CTRLA = static_cast<uint8_t>((get_tca().CTRLA & 0x81) | prescale);
 	}
 
 	static register16_t& cnt()
@@ -93,6 +48,27 @@ public:
 	static void set_period(const uint16_t period)
 	{
 		get_tca().PER = period;
+	}
+
+	constexpr static uint16_t get_div()
+	{
+		if constexpr(prescale == div1)
+			return 1;
+		else if constexpr(prescale == div2)
+			return 2;
+		else if constexpr(prescale == div4)
+			return 4;
+		else if constexpr (prescale == div8)
+			return 8;
+		else if constexpr (prescale == div16)
+			return 16;
+		else if constexpr (prescale == div64)
+			return 64;
+		else if constexpr (prescale == div256)
+			return 256;
+
+		// default is div1024
+		return 1024;
 	}
 
 	template <uint8_t Channel>

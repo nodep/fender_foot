@@ -7,7 +7,7 @@ F_CPU   = 24000000
 # Get avrdude here: https://github.com/mariusgreuel/avrdude
 AVRDUDE = avrdude -c pkobn_updi -p $(DEVICE)
 
-CFLAGS  = -Wall -Os -DF_CPU=$(F_CPU)
+CFLAGS  = -std=c++17 -Wall -Os -DF_CPU=$(F_CPU)
 CFLAGS += -D_DEBUG
 
 LFLAGS  = -Wl,--relax
