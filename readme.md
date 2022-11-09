@@ -1,4 +1,4 @@
-# Communication protocol for Fender foot switch (MS-4) and expression (EXP-1) pedals
+# Fender foot switch pedal protocol (MS-4 and EXP-1)
 
 ## Introduction
 
