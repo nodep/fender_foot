@@ -20,9 +20,11 @@ The MS-4 and/or EXP-1 are connected to the amp with a standard 1/4 inch mono jac
 
 ![interface circuit](images/4_button_footswitch.png)
 
-The main thing here are the two OR logic gates connected in parallel. 74LVC2G32 can output 50mA per channel, which is a little more than usual for a logic gate, and I am guessing that is the reason why they chose it. Connecting them in parallel allows the pedals to be powered by up to 100mA. The tip of the jack is connected to 4BTFS. There is also a Schmitt trigger (SN74LVC1G17) which clears up the noise coming in through the cable that the pedals are connected to. I have no idea why they are powering the Schmitt trigger with 5V and then dropping its output with the voltage divider to around 3.3V. Your guess is as good as mine.
+The main thing here are the two OR logic gates connected in parallel. 74LVC2G32 can output 50mA per channel, which is a little more than usual for a logic gate, and I am guessing that is the reason why they chose it. Connecting them in parallel allows the pedals to be powered by up to 100mA. The tip of the jack is connected to 4BTFS. There is also a Schmitt trigger (SN74LVC1G17) which clears up the noise coming in through the cable that the pedals are connected to.
 
 PB10 is connected to the TX pin, and PB11 to the RX pin of the microcontroller.
+
+I suspect that Schmitt trigger is powered by 5V to account for when the pedal pulls the line low while sending data to the amp. What will happen is that even though the pedal has pulled the line low, the OR gates are still driving the line high. There will be current flowing through the two 22 ohm resistors (R147 and R151) and the voltage on the TP102 might not be low enough to be read as a low state on a 3.3V system. But it could be low enough to be read as a low signal for a 5V Schmitt trigger. Then the output of the Schmitt trigger is brought to 3.3V with the voltage divider (R144 and R145).
 
 ## Communication
 
