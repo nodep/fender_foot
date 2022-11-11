@@ -142,6 +142,8 @@ int main()
 					dprint("pos %d\n", pedals.exp_position);
 				
 				num = static_cast<uint16_t>(pedals.exp_position >> 3);
+				if (num > 999)
+					num = 999;
 				pedals.set_ftsw_number(num);
 			}
 			else if (event == evExpBtnDown)

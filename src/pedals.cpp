@@ -19,7 +19,6 @@ const uint8_t ID_FTSW	= 0x08;
 
 const uint8_t ACK		= 0xFD;
 const uint8_t ERROR		= 0xFE;
-const uint8_t EOS		= 0xFF;	// end of stream
 
 const uint8_t LED_FTSW	= 0x70;	// the LEDS on the expression pedal
 const uint8_t LED_DISP2	= 0x72;	// left digit on the LED display

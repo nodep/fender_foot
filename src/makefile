@@ -4,7 +4,7 @@ DEVICE  = avr128da48
 # get us up to 24MHz; warp speed!
 F_CPU   = 24000000
 
-# Get avrdude here: https://github.com/mariusgreuel/avrdude
+# Get avrdude for Windows here: https://github.com/mariusgreuel/avrdude
 AVRDUDE = avrdude -c pkobn_updi -p $(DEVICE)
 
 CFLAGS  = -std=c++17 -Wall -Os -DF_CPU=$(F_CPU)
@@ -14,27 +14,31 @@ LFLAGS  = -Wl,--relax
 #LFLAGS += -u vfprintf
 
 # I used AVR Toolchain 3.7 and the latest AVR-Dx pack:
-# https://packs.download.microchip.com/
+# https://packs.download.microchip.com/ The file has an extension atpack,
+# but it is actially a zip file. Rename and unzip.
 # You need to copy the include files, device specs and .o files
-# from the pack to the avr-gcc respective directories
+# from the pack to the avr-gcc respective directories.
+# You can use the script in tools to help with that.
 COMPILE = avr-g++ -mmcu=$(DEVICE) $(CFLAGS)
 
-OBJECTS = main.o avrdbg.o pedals.o
+OBJPATH = obj/
+OBJECTS = $(addprefix $(OBJPATH), main.o avrdbg.o pedals.o)
+TGTNAME = $(OBJPATH)$(TARGET)
 
-hex: $(TARGET).hex
+hex: $(TGTNAME).hex
 
-$(TARGET).hex: $(OBJECTS)
-	$(COMPILE) -o $(TARGET).elf $(OBJECTS) $(LFLAGS)
-	rm -f $(TARGET).hex $(TARGET).eep.hex
-	avr-objcopy -j .text -j .data -O ihex $(TARGET).elf $(TARGET).hex
-	avr-objdump -h -S $(TARGET).elf > $(TARGET).lst
-	avr-size $(TARGET).elf
+$(TGTNAME).hex: $(OBJECTS)
+	$(COMPILE) -o $(TGTNAME).elf $(OBJECTS) $(LFLAGS)
+	rm -f $(TGTNAME).hex $(TGTNAME).eep.hex
+	avr-objcopy -j .text -j .data -O ihex $(TGTNAME).elf $(TGTNAME).hex
+	avr-objdump -h -S $(TGTNAME).elf > $(TGTNAME).lst
+	avr-size $(TGTNAME).elf
 
-flash: $(TARGET).hex
-	$(AVRDUDE) -U flash:w:$(TARGET).hex:i
+flash: all hex
+	$(AVRDUDE) -U flash:w:$(TGTNAME).hex:i
 
 clean:
-	rm -f $(TARGET).hex $(TARGET).elf $(TARGET).lst $(OBJECTS)
+	rm -f $(TGTNAME).hex $(TGTNAME).elf $(TGTNAME).lst $(OBJECTS)
 
 reset:
 	$(AVRDUDE)
@@ -42,10 +46,7 @@ reset:
 read_fuse:
 	$(AVRDUDE) -U hfuse:r:-:h -U lfuse:r:-:h -U efuse:r:-:h
 
-.S.o:
-	$(COMPILE) -x assembler-with-cpp -c $< -o $@
-
-.cpp.o:
+$(OBJPATH)%.o: %.cpp makefile
 	$(COMPILE) -c $< -o $@
 
 # the following saves the assembly listings and preprocessed sources
