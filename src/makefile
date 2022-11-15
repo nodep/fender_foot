@@ -13,21 +13,22 @@ CFLAGS += -D_DEBUG
 LFLAGS  = -Wl,--relax
 #LFLAGS += -u vfprintf
 
-# I used AVR Toolchain 3.7 and the latest AVR-Dx pack:
-# https://packs.download.microchip.com/ The file has an extension atpack,
-# but it is actially a zip file. Rename and unzip.
+# I used AVR Toolchain 3.7 and the latest AVR-Dx pack which you can get here:
+# https://packs.download.microchip.com/
+# The file has an extension atpack, but it is actually a zip file.
+# Rename it and unzip.
 # You need to copy the include files, device specs and .o files
-# from the pack to the avr-gcc respective directories.
+# from the unzipped atpack to avr-gcc respective directories.
 # You can use the script in tools to help with that.
 COMPILE = avr-g++ -mmcu=$(DEVICE) $(CFLAGS)
 
-OBJPATH = obj/
-OBJECTS = $(addprefix $(OBJPATH), main.o avrdbg.o pedals.o)
-TGTNAME = $(OBJPATH)$(TARGET)
+OBJPATH = obj
+OBJECTS = $(addprefix $(OBJPATH)/, main.o avrdbg.o pedals.o)
+TGTNAME = $(OBJPATH)/$(TARGET)
 
 hex: $(TGTNAME).hex
 
-$(TGTNAME).hex: $(OBJECTS)
+$(TGTNAME).hex: $(OBJPATH) $(OBJECTS)
 	$(COMPILE) -o $(TGTNAME).elf $(OBJECTS) $(LFLAGS)
 	rm -f $(TGTNAME).hex $(TGTNAME).eep.hex
 	avr-objcopy -j .text -j .data -O ihex $(TGTNAME).elf $(TGTNAME).hex
@@ -46,7 +47,10 @@ reset:
 read_fuse:
 	$(AVRDUDE) -U hfuse:r:-:h -U lfuse:r:-:h -U efuse:r:-:h
 
-$(OBJPATH)%.o: %.cpp makefile
+$(OBJPATH):
+	mkdir $(OBJPATH)
+
+$(OBJPATH)/%.o: %.cpp makefile $(OBJPATH)
 	$(COMPILE) -c $< -o $@
 
 # the following saves the assembly listings and preprocessed sources

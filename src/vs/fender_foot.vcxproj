@@ -37,7 +37,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{28a95491-b619-4373-bcd4-c97d5dc90c03}</ProjectGuid>
-    <RootNamespace>testSimple</RootNamespace>
+    <RootNamespace>fender_foot</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

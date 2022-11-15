@@ -23,6 +23,8 @@ void hw_init()
 	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_2M_gc;
 #elif F_CPU == 3000000
     CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_3M_gc;
+#elif F_CPU == 4000000
+    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_4M_gc;
 #elif F_CPU == 8000000
     CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_8M_gc;
 #elif F_CPU == 12000000
@@ -34,7 +36,7 @@ void hw_init()
 #elif F_CPU == 24000000
     CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
 #else
-	// default 4MHz: no need to set anything
+	#error Unknown F_CPU setting
 #endif
 
 	// TimerA 1 PWM to PORTC
