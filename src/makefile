@@ -23,7 +23,7 @@ LFLAGS  = -Wl,--relax
 COMPILE = avr-g++ -mmcu=$(DEVICE) $(CFLAGS)
 
 OBJPATH = obj
-OBJECTS = $(addprefix $(OBJPATH)/, main.o avrdbg.o pedals.o)
+OBJECTS = $(addprefix $(OBJPATH)/, main.o avrdbg.o pedals.o display.o)
 TGTNAME = $(OBJPATH)/$(TARGET)
 
 hex: $(TGTNAME).hex

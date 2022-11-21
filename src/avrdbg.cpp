@@ -37,6 +37,7 @@ void dbgInit()
 	
 	// baud rate calc
 	DebugUsart::set_baud(230400);
+	// we only want TX, RX is not needed
 	DebugUsart::enable(true, false);
 }
 

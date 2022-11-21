@@ -53,12 +53,12 @@ public:
 	//////////////////
 	// output
 	//////////////////
-	static void set()
+	static void high()
 	{
 		get_vport().OUT |= bitmask;
 	}
 
-	static void clear()
+	static void low()
 	{
 		get_vport().OUT &= ~bitmask;
 	}
@@ -71,9 +71,9 @@ public:
 	static void set_value(const bool value)
 	{
 		if (value)
-			set();
+			high();
 		else
-			clear();
+			low();
 	}
 
 	//////////////////

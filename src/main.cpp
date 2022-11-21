@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <util/delay.h>
+#include <avr/pgmspace.h>
+
 #include "iopin.h"
 #include "timera.h"
 #include "usart.h"
@@ -9,9 +12,19 @@
 #include "watch.h"
 
 #include "pedals.h"
+#include "spimaster.h"
 
 using led = IoPin<'C', 6>;
 using btn = IoPin<'C', 7>;
+
+// SPI pins
+using mosi	= IoPin<'A', 4>;
+using sck	= IoPin<'A', 6>;
+using ss	= IoPin<'A', 7>;
+using rst	= IoPin<'B', 0>;
+using dc	= IoPin<'B', 1>;
+
+using spi	= SpiMaster<0, 7>;
 
 // init the CPU clock and PORTMUX
 void hw_init()
@@ -44,11 +57,6 @@ void hw_init()
 
 	// USART 3 is on ALT1: TX->PB4 RX->PB5
 	PORTMUX.USARTROUTEA = PORTMUX_USART3_0_bm;
-}
-
-int main()
-{
-	hw_init();
 
 	// setup the debug log
 	dbgInit();
@@ -64,7 +72,10 @@ int main()
 	// setup our main clock
 	Watch::set_prescale();
 	Watch::start();
+}
 
+void test_pedals()
+{
 	Pedals pedals;
 
 	uint8_t mode = 0;
@@ -169,5 +180,108 @@ int main()
 			else if (event == evFtswOff)
 				dprint("ftsw offline\n");
 		}
+	}
+}
+
+#define TWI0_BAUD(F_SCL, T_RISE) ((((((float)F_CPU / (float)F_SCL)) - 10 - ((float)F_CPU * T_RISE / 1000000))) / 2)
+
+void twi_test()
+{
+	// debugging pin
+	using pb4 = IoPin<'B', 4>;
+	pb4::dir_out();
+	pb4::high();
+	pb4::low();
+	pb4::high();
+	pb4::low();
+
+	// set up the I2C
+	using sda = IoPin<'A', 2>;
+	using scl = IoPin<'A', 3>;
+
+	sda::low();
+	sda::dir_out();
+	scl::low();
+	scl::dir_out();
+
+	TWI0.CTRLA = TWI_SDAHOLD_500NS_gc;
+	TWI0.MBAUD = TWI0_BAUD(100000, 0);
+	TWI0.MCTRLA  |= TWI_ENABLE_bm;
+	TWI0.MSTATUS |= TWI_BUSSTATE_IDLE_gc;
+
+	_delay_ms(100);
+
+	const uint8_t addr = 0x78;
+	while (true)
+	{
+		pb4::high();
+
+		// start by sending the address
+		TWI0.MADDR = addr | 1;
+
+		loop_until_bit_is_set(TWI0.MSTATUS, TWI_WIF_bp);
+
+		if (bit_is_clear(TWI0.MSTATUS, TWI_RXACK_bp))
+			dprint("found 0x%02x\n", addr);
+		else
+			dprint("no 0x%02x\n", addr);
+
+		TWI0.MCTRLB = TWI_MCMD_STOP_gc;
+
+		pb4::low();
+
+		_delay_ms(100);
+	}
+}
+
+int main()
+{
+	hw_init();
+
+	mosi::dir_out();
+	sck::dir_out();
+
+	rst::low();
+	rst::dir_out();
+
+	ss::high();
+	ss::dir_out();
+
+	dc::high();
+	dc::dir_out();
+
+	_delay_ms(100);
+	rst::high();
+	_delay_ms(200);
+
+	spi::init();
+
+	// init
+	displayInit(initCommands);
+
+	// show something
+	const uint16_t cols[] = {
+		ST77XX_BLACK,
+		ST77XX_WHITE,
+		ST77XX_RED,
+		ST77XX_GREEN,
+		ST77XX_BLUE,
+		ST77XX_CYAN,
+		ST77XX_MAGENTA,
+		ST77XX_YELLOW,
+		ST77XX_ORANGE,
+	};
+
+	uint8_t ndx = 0;
+	while (true)
+	{
+		const uint16_t n = Watch::cnt();
+		fillScreen(cols[ndx % 9]);
+		const uint16_t dur = Watch::cnt() - n;
+		dprint("dur: %d\n", (uint16_t)Watch::ticks2ms(dur));
+
+		ndx++;
+
+		_delay_ms(1000);
 	}
 }

@@ -1,0 +1,12 @@
+A2 - logic debug
+A3 - logic debug
+A4 - MOSI 0
+A6 - SCK 0
+A7 - SS 0
+B0 - RST
+B1 - DC
+B4 - TX UART 3
+B5 - RX UART 3
+C0 - TX UART 1
+C6 - LED
+C7 - Button

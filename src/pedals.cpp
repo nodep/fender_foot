@@ -114,7 +114,7 @@ void Pedals::reset()
 	enable(false, false);	// disable RX and TX
 
 	IoPin<'B', 4>::dir_out();	// TX is out
-	IoPin<'B', 4>::clear();		// lo
+	IoPin<'B', 4>::low();		// lo
 
 	_delay_ms(1000);
 
