@@ -9,17 +9,6 @@
 
 #include "display.h"
 
-// the pins and HW we use here
-using mosi	= IoPin<'A', 4>;
-using sck	= IoPin<'A', 6>;
-using ss	= IoPin<'A', 7>;
-using rst	= IoPin<'B', 0>;
-using dc	= IoPin<'B', 1>;
-using spi	= SpiMaster<0, 6>;
-
-// The code below is heavily inspired by Adafruit's LCD arduino library
-// Thank you, Lady Ada!
-
 enum ST77Constants : uint8_t
 {
 	ST77XX_NOP = 0x00,
@@ -229,7 +218,7 @@ void Display::send_init_command(const uint8_t commandByte, const uint8_t* dataBy
 	ss::high();
 }
 
-void Display::set_addr_window(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
+void Display::send_addr_window(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
 {
 	const uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
 	const uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
@@ -251,22 +240,27 @@ void Display::send_pixels(const Color color, const uint16_t len)
 
 void Display::fill_screen(const Color color)
 {
-	fill_rect(0, 0, 128, 160, color);
+	fill_rect(0, 0, WIDTH, HEIGHT, color);
 }
 
 void Display::fill_rect(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h, const Color color)
 {
 	ss::low();
-	set_addr_window(x, y, w, h);
+	send_addr_window(x, y, w, h);
 	send_pixels(color, w * h);
 	ss::high();
+}
+
+void Display::send_pixel(const uint8_t x, const uint8_t y, const Color color)
+{
+	send_addr_window(x, y, 1, 1);
+	spi::send16(color);
 }
 
 void Display::draw_pixel(const uint8_t x, const uint8_t y, const Color color)
 {
 	ss::low();
-	set_addr_window(x, y, 1, 1);
-	spi::send16(color);
+	send_pixel(x, y, color);
 	ss::high();
 }
 
@@ -368,13 +362,13 @@ void Display::draw_line(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const Co
 
 void Display::send_hline(uint8_t x, uint8_t y, uint8_t len, Color color)
 {
-	set_addr_window(x, y, len, 1);
+	send_addr_window(x, y, len, 1);
 	send_pixels(color, len);
 }
 
 void Display::send_vline(uint8_t x, uint8_t y, uint8_t len, Color color)
 {
-	set_addr_window(x, y, 1, len);
+	send_addr_window(x, y, 1, len);
 	send_pixels(color, len);
 }
 

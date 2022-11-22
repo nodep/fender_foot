@@ -7,10 +7,10 @@ F_CPU   = 24000000
 # Get avrdude for Windows here: https://github.com/mariusgreuel/avrdude
 AVRDUDE = avrdude -c pkobn_updi -p $(DEVICE)
 
-CFLAGS  = -std=c++17 -Wall -Os -DF_CPU=$(F_CPU)
+CFLAGS  = -std=c++17 -Wall -Os -ffunction-sections -fdata-sections -DF_CPU=$(F_CPU)
 CFLAGS += -D_DEBUG
 
-LFLAGS  = -Wl,--relax
+LFLAGS  = -Wl,--relax,--gc-sections
 #LFLAGS += -u vfprintf
 
 # I used AVR Toolchain 3.7 and the latest AVR-Dx pack which you can get here:
@@ -23,7 +23,7 @@ LFLAGS  = -Wl,--relax
 COMPILE = avr-g++ -mmcu=$(DEVICE) $(CFLAGS)
 
 OBJPATH = obj
-OBJECTS = $(addprefix $(OBJPATH)/, main.o avrdbg.o pedals.o display.o)
+OBJECTS = $(addprefix $(OBJPATH)/, main.o avrdbg.o pedals.o display.o displaytext.o)
 TGTNAME = $(OBJPATH)/$(TARGET)
 
 hex: $(TGTNAME).hex

@@ -189,10 +189,18 @@ int main()
 		//Display::draw_line(0, 0, 128, 160, colGreen);
 		//Display::draw_line(0, 160, 128, 0, colYellow);
 		//Display::fill_rect(0, 150, 128, 10, colGreen);
-		Display::fill_circle(64, 64, 63, colBlue);
+		//Display::fill_circle(64, 64, 63, colBlue);
 
 		//for (uint8_t r = 1; r <= 63; r++)
 		//	Display::draw_circle(63, 63, r, colBlue);
+
+		char buff[256];
+		size_t i;
+		for (i = 0; i < sizeof(buff) - 16; ++i)
+			buff[i] = i + 16;
+		buff[i] = '\0';
+
+		Display::print(buff, false, 0, 0, colWhite, colBlack);
 
 		const uint16_t dur = Watch::cnt() - start;
 		dprint("dur: %d\n", (uint16_t)Watch::ticks2ms(dur));
