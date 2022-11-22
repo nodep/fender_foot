@@ -20,15 +20,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\avrdbg.h" />
+    <ClInclude Include="..\display.h" />
     <ClInclude Include="..\iopin.h" />
     <ClInclude Include="..\pedals.h" />
     <ClInclude Include="..\ring.h" />
+    <ClInclude Include="..\spimaster.h" />
     <ClInclude Include="..\timera.h" />
     <ClInclude Include="..\usart.h" />
     <ClInclude Include="..\watch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avrdbg.cpp" />
+    <ClCompile Include="..\display.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="stub.cpp" />
     <ClCompile Include="..\pedals.cpp" />

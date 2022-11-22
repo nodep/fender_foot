@@ -2,7 +2,7 @@
 
 #include <avr/io.h>
 
-enum TimerA_Prescale
+enum TimerA_Prescale : uint8_t
 {
 	div1 = TCA_SINGLE_CLKSEL_DIV1_gc,
 	div2 = TCA_SINGLE_CLKSEL_DIV2_gc,
@@ -18,6 +18,8 @@ template <uint8_t TimerNum, TimerA_Prescale prescale>
 class TimerA
 {
 private:
+	static_assert(TimerNum <= 1, "We don't have that timer");
+
 	static TCA_SINGLE_t& get_tca()
 	{
 		return (&TCA0)[TimerNum].SINGLE;

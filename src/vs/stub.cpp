@@ -20,3 +20,10 @@ void loop_until_bit_is_set(const uint16_t byte, const uint8_t bit)
 	(void)byte;
 	(void)bit;
 }
+
+bool bit_is_clear(const uint16_t byte, const uint8_t bit)
+{
+	(void)byte;
+	(void)bit;
+	return true;
+}

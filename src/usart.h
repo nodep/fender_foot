@@ -4,7 +4,7 @@ template <uint8_t UsartNum>
 class Usart
 {
 protected:
-	static_assert(UsartNum < 6);
+	static_assert(UsartNum <= 5);
 
 	constexpr static USART_t& get_usart()
 	{

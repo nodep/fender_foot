@@ -11,7 +11,8 @@
                 "base": "$gcc",
                 "fileLocation": "autoDetect"
             },
-            "group": "build"
+            "group": "build",
+            "presentation": { "clear": true }
         },
         {
             "label": "rebuild",
@@ -24,7 +25,8 @@
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "presentation": { "clear": true }
         },
         {
             "label": "flash",
@@ -34,7 +36,8 @@
                 "base": "$gcc",
                 "fileLocation": "autoDetect"
             },
-            "group": "build"
+            "group": "build",
+            "presentation": { "clear": true }
         },
         {
             "label": "clean",
@@ -44,13 +47,15 @@
                 "base": "$gcc",
                 "fileLocation": "autoDetect"
             },
-            "group": "build"
+            "group": "build",
+            "presentation": { "clear": true }
         },
         {
             "label": "reset",
             "type": "shell",
             "command": "make reset",
-            "group": "build"
+            "group": "build",
+            "presentation": { "clear": true }
         }
     ]
 }
