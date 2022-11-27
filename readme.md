@@ -20,7 +20,7 @@ The MS-4 and/or EXP-1 are connected to the amp with a standard 1/4 inch mono jac
 
 ![interface circuit](images/4_button_footswitch.png)
 
-The main thing here are the two OR logic gates connected in parallel. 74LVC2G32 can output 50mA per channel, which is a little more than usual for a logic gate, and I am guessing that is the reason why they chose it. Connecting them in parallel allows the pedals to be powered by up to 100mA. The tip of the jack is connected to 4BTFS. There is also a Schmitt trigger (SN74LVC1G17) which clears up the noise coming in through the cable that the pedals are connected to.
+The main thing here are the two OR logic gates connected in parallel. 74LVC2G32 can output 24mA per channel, which is a little more than usual for a logic gate, and I am guessing that is the reason why they chose it. Connecting them in parallel allows the pedals to be powered by up to 50mA. The tip of the jack is connected to 4BTFS. There is also a Schmitt trigger (SN74LVC1G17) which clears up the noise coming in through the cable that the pedals are connected to.
 
 PB10 is connected to the TX pin, and PB11 to the RX pin of the microcontroller.
 
