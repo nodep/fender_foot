@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
 #include <util/delay.h>
 #include <avr/pgmspace.h>
@@ -174,19 +175,40 @@ void test_pedals()
 	}
 }
 
+const uint8_t PROGMEM pot_ring[] =
+{
+ 23, 11, 42, 19, 36, 23, 32, 27, 28, 31, 25, 33, 23, 35, 20, 39,
+ 17, 16,  9, 16, 15, 14, 15, 14, 14, 12, 19, 12, 13, 11, 23, 11,
+ 11, 11, 25, 11,  9, 11, 27, 11,  8, 10, 29, 10,  7, 10, 31, 10,
+  6,  9, 33,  9,  5,  9, 35,  9,  4,  9, 35,  9,  3,  9, 37,  9,
+  2,  9, 37,  9,  2,  8, 39,  8,  2,  8, 39,  8,  1,  9, 39, 17,
+ 41, 16, 41, 16, 41, 16, 41, 16, 41, 16, 41, 16, 41, 16, 41, 16,
+ 41, 17, 39,  9,  1,  8, 39,  8,  2,  8, 39,  8,  2,  9, 37,  9,
+  2,  9, 37,  9,  3,  9, 35,  9,  4,  9, 35,  9,  5,  9, 33,  9,
+  6, 10, 31, 10,  7, 10, 29, 10,  8, 11, 27, 11,  9, 11, 25, 11,
+ 11, 11, 23, 11, 13, 12, 19, 12, 14, 14, 15, 14, 15, 16,  9, 16,
+ 17, 39, 20, 35, 23, 33, 25, 31, 28, 27, 32, 23, 36, 19, 42, 11,
+ 23, 0
+};
+
+#define PI 3.14159265
+
 int main()
 {
 	init_hw();
 
 	Display::init();
 
-	Display::fill_screen(colBlack);
-
 	while (true)
 	{
 		const uint16_t start = Watch::cnt();
 
-		//Display::draw_line(0, 0, 128, 160, colGreen);
+		Display::fill_screen(colBlack);
+
+		//for (double a = 0; a < PI/2; a += PI / 180)
+		//	Display::draw_pixel(64 + cos(a)*60, 80 + sin(a)*60, colYellow);
+		Display::draw_circle(64, 80, 60, colYellow);
+
 		//Display::draw_line(0, 160, 128, 0, colYellow);
 		//Display::fill_rect(0, 150, 128, 10, colGreen);
 		//Display::fill_circle(64, 64, 63, colBlue);
@@ -194,13 +216,14 @@ int main()
 		//for (uint8_t r = 1; r <= 63; r++)
 		//	Display::draw_circle(63, 63, r, colBlue);
 
-		char buff[256];
-		size_t i;
-		for (i = 0; i < sizeof(buff) - 16; ++i)
-			buff[i] = i + 16;
-		buff[i] = '\0';
+		//char buff[256];
+		//size_t i;
+		//for (i = 0; i < sizeof(buff) - 16; ++i)
+		//	buff[i] = i + 16;
+		//buff[i] = '\0';
+		//Display::print(buff, false, 0, 0, colWhite, colBlack);
 
-		Display::print(buff, false, 0, 0, colWhite, colBlack);
+		Display::draw_raster(pot_ring, 5, 20, 57, 57, colRed, colBlack);
 
 		const uint16_t dur = Watch::cnt() - start;
 		dprint("dur: %d\n", (uint16_t)Watch::ticks2ms(dur));

@@ -48,6 +48,8 @@ public:
 
 	static void print(const char* str, bool smallFont, uint8_t x, uint8_t y, Color color, Color bgcolor);
 
+	static void draw_raster(const uint8_t* raster, uint8_t x, uint8_t y, uint8_t w, uint8_t h, Color color, Color bgcolor);
+
 private:
 	// screen dimensions
 	enum

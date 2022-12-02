@@ -345,9 +345,9 @@ void Display::draw_line(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const Co
 	for (; x0 <= x1; x0++)
 	{
 		if (steep)
-			draw_pixel(y0, x0, color);
+			send_pixel(y0, x0, color);
 		else
-			draw_pixel(x0, y0, color);
+			send_pixel(x0, y0, color);
 
 		err -= dy;
 		if (err < 0)
@@ -428,6 +428,31 @@ void Display::fill_circle(uint8_t x0, uint8_t y0, uint8_t r, Color color)
 			py = y;
 		}
 		px = x;
+	}
+
+	ss::high();
+}
+
+void Display::draw_raster(const uint8_t* raster, uint8_t x, uint8_t y, uint8_t w, uint8_t h, Color color, Color bgcolor)
+{
+	ss::low();
+
+	send_addr_window(x, y, w, h);
+
+	Color curr_color = bgcolor;
+	while (true)
+	{
+		const uint8_t num_pixels = pgm_read_byte(raster++);
+
+		if (num_pixels == 0)
+			break;
+
+		send_pixels(curr_color, num_pixels);
+
+		if (curr_color == color)
+			curr_color = bgcolor;
+		else
+			curr_color = color;
 	}
 
 	ss::high();
