@@ -223,10 +223,10 @@ void Display::send_addr_window(const uint8_t x, const uint8_t y, const uint8_t w
 	const uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
 	const uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
 
-	send_command(ST77XX_CASET); // Column addr set
+	send_command(ST77XX_CASET); // column addr set
 	spi::send32(xa);
 
-	send_command(ST77XX_RASET); // Row addr set
+	send_command(ST77XX_RASET); // ryow addr set
 	spi::send32(ya);
 
 	send_command(ST77XX_RAMWR); // write to RAM
@@ -235,7 +235,7 @@ void Display::send_addr_window(const uint8_t x, const uint8_t y, const uint8_t w
 void Display::send_pixels(const Color color, const uint16_t len)
 {
 	for (uint16_t c = 0; c < len; c++)
-		spi::send16(color);
+		spi::send16(color2rgb(color));
 }
 
 void Display::fill_screen(const Color color)
@@ -254,7 +254,7 @@ void Display::fill_rect(const uint8_t x, const uint8_t y, const uint8_t w, const
 void Display::send_pixel(const uint8_t x, const uint8_t y, const Color color)
 {
 	send_addr_window(x, y, 1, 1);
-	spi::send16(color);
+	spi::send16(color2rgb(color));
 }
 
 void Display::draw_pixel(const uint8_t x, const uint8_t y, const Color color)
@@ -272,12 +272,12 @@ void Display::draw_circle(const uint8_t x0, const uint8_t y0, const uint8_t r, c
 	int16_t x = 0;
 	int16_t y = r;
 
-	ss::high();
+	start();
 
-	draw_pixel(x0, y0 + r, color);
-	draw_pixel(x0, y0 - r, color);
-	draw_pixel(x0 + r, y0, color);
-	draw_pixel(x0 - r, y0, color);
+	send_pixel(x0, y0 + r, color);
+	send_pixel(x0, y0 - r, color);
+	send_pixel(x0 + r, y0, color);
+	send_pixel(x0 - r, y0, color);
 
 	while (x < y)
 	{
@@ -292,17 +292,17 @@ void Display::draw_circle(const uint8_t x0, const uint8_t y0, const uint8_t r, c
 		ddF_x += 2;
 		f += ddF_x;
 
-		draw_pixel(x0 + x, y0 + y, color);
-		draw_pixel(x0 - x, y0 + y, color);
-		draw_pixel(x0 + x, y0 - y, color);
-		draw_pixel(x0 - x, y0 - y, color);
-		draw_pixel(x0 + y, y0 + x, color);
-		draw_pixel(x0 - y, y0 + x, color);
-		draw_pixel(x0 + y, y0 - x, color);
-		draw_pixel(x0 - y, y0 - x, color);
+		send_pixel(x0 + x, y0 + y, color);
+		send_pixel(x0 - x, y0 + y, color);
+		send_pixel(x0 + x, y0 - y, color);
+		send_pixel(x0 - x, y0 - y, color);
+		send_pixel(x0 + y, y0 + x, color);
+		send_pixel(x0 - y, y0 + x, color);
+		send_pixel(x0 + y, y0 - x, color);
+		send_pixel(x0 - y, y0 - x, color);
 	}
 
-	ss::high();
+	finish();
 }
 
 template <typename T>
