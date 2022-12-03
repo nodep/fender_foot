@@ -3,6 +3,8 @@
 #include "iopin.h"
 #include "spimaster.h"
 
+#include "graph.h"
+
 // The code below is lifted from Adafruit's LCD arduino library
 // Thank you, Lady Ada!
 
@@ -13,21 +15,6 @@ using ss	= IoPin<'A', 7>;
 using rst	= IoPin<'B', 0>;
 using dc	= IoPin<'B', 1>;
 using spi	= SpiMaster<0, 6>;
-
-using Coord = uint8_t;
-
-enum Color : uint8_t
-{
-	colBlack,
-	colWhite,
-	colRed,
-	colGreen,
-	colBlue,
-	colCyan,
-	colMagenta,
-	colYellow,
-	colOrange,
-};
 
 enum ColorRGB : uint16_t
 {
@@ -89,6 +76,12 @@ struct WindowRGB
 	{
 		send_pixel(x, y, color2rgb(color));
 	}
+
+	void send_vline(Coord x, Coord y, Coord len, Color color)
+	{
+		for (Coord y1 = y; y1 < y + len; ++y1)
+			send_pixel(x, y1, color);
+	}
 };
 
 template <Coord W, Coord H>
@@ -100,24 +93,31 @@ struct Window
 	void start()	{}
 	void finish()	{}
 
-	struct two_pixels
+	struct TwoPixels
 	{
 		unsigned int	first : 4;
 		unsigned int	second : 4;
 
-		two_pixels()
+		TwoPixels()
 		{}
-		two_pixels(Color col)
+
+		TwoPixels(Color col)
 			: first(col), second(col)
 		{}
 	};
 	
-	two_pixels buffer[(Width * Height + 1) / 2] /*= { [0 ... 10] = 0 }*/;
+	TwoPixels buffer[(Width * Height + 1) / 2];
 
 	Window(Color colbgnd)
 	{
-		for (two_pixels& pixels : buffer)
-			pixels = two_pixels(colbgnd);
+		for (TwoPixels& pixels : buffer)
+			pixels = TwoPixels(colbgnd);
+	}
+
+	void send_vline(Coord x, Coord y, Coord len, Color color)
+	{
+		for (Coord y1 = y; y1 < y + len; ++y1)
+			send_pixel(x, y1, color);
 	}
 
 	void send_pixel(Coord x, Coord y, Color color)
@@ -129,7 +129,7 @@ struct Window
 			buffer[ndx / 2].first = color;
 	}
 
-	Color get_pixel(Coord x, Coord y)
+	Color get_color(Coord x, Coord y)
 	{
 		const size_t ndx = Width * y + x;
 		if (ndx & 1)
@@ -149,15 +149,6 @@ public:
 	static void off();
 	static void on();
 	
-	static void fill_screen(Color color);
-	static void fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, Color color);
-	static void draw_pixel(uint8_t x, uint8_t y, Color color);
-	static void draw_circle(uint8_t x, uint8_t y, uint8_t r, Color color);
-	static void fill_circle(uint8_t x, uint8_t y, uint8_t r, Color color);
-	static void draw_line(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, Color color);
-	static void draw_hline(uint8_t x, uint8_t y, uint8_t len, Color color);
-	static void draw_vline(uint8_t x, uint8_t y, uint8_t len, Color color);
-
 	static void print(const char* str, bool smallFont, uint8_t x, uint8_t y, Color color, Color bgcolor);
 
 	static void draw_raster(const uint8_t* raster, uint8_t x, uint8_t y, uint8_t w, uint8_t h, Color color, Color bgcolor);
@@ -172,18 +163,40 @@ public:
 		ss::high();
 	}
 
-	static void send_pixel(uint8_t x, uint8_t y, Color color);
+	static void send_pixel(uint8_t x, uint8_t y, Color color)
+	{
+		set_addr_window(x, y, 1, 1);
+		send_color(color);
+	}
 
 	static void send_color(Color color)
 	{
 		spi::send16(color2rgb(color));
 	}
 
+	static void send_colors(Color color, uint16_t len)
+	{
+		for (uint16_t c = 0; c < len; c++)
+			send_color(color);
+	}
+
+	static void send_hline(uint8_t x, uint8_t y, uint8_t len, Color color)
+	{
+		set_addr_window(x, y, len, 1);
+		send_colors(color, len);
+	}
+
+	static void send_vline(uint8_t x, uint8_t y, uint8_t len, Color color)
+	{
+		set_addr_window(x, y, 1, len);
+		send_colors(color, len);
+	}
+
 	template <typename Win>
 	static void blit(Win& w, Coord x, Coord y)
 	{
 		start();
-		send_addr_window(x, y, Win::Width, Win::Height);
+		set_addr_window(x, y, Win::Width, Win::Height);
 		for (ColorRGB col : w.buffer)
 			spi::send16(col);
 		finish();
@@ -193,14 +206,21 @@ public:
 	static void blit(Window<WinWidth, WinHeight>& w, Coord x, Coord y)
 	{
 		start();
-		send_addr_window(x, y, WinWidth, WinHeight);
+		set_addr_window(x, y, WinWidth, WinHeight);
 		for (Coord x = 0; x < WinHeight; x++)
 			for (Coord y = 0; y < WinWidth; y++)
-				send_color(w.get_pixel(x, y));
+				send_color(w.get_color(x, y));
 		finish();
 	}
 
-private:
+protected:
+
+	template <typename T>
+	friend void fill_rect(T& canvas, Coord x0, Coord y0, Coord w, Coord h, Color color);
+
+	template <typename T>
+	friend void draw_raster(T& d, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor);
+
 	// screen dimensions
 	enum
 	{
@@ -209,11 +229,44 @@ private:
 	};
 
 	static void send_init_command(uint8_t commandByte, const uint8_t* dataBytes, uint8_t numDataBytes);
-	static void send_addr_window(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
+	static void set_addr_window(uint8_t x, uint8_t y, uint8_t w, uint8_t h);
 	static void send_command(uint8_t cmd);
-	static void send_pixels(Color color, uint16_t len);
-	static void send_hline(uint8_t x, uint8_t y, uint8_t len, Color color);
-	static void send_vline(uint8_t x, uint8_t y, uint8_t len, Color color);
+
 	static void send_char(uint8_t x, uint8_t y, unsigned char c, Color color, Color bgcolor);
 	static void send_char_custom(const GFXfont* gfxFont, uint8_t x, uint8_t y, unsigned char c, Color color);
 };
+
+template <>
+inline void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Color color)
+{
+	Display::start();
+	Display::set_addr_window(x, y, w, h);
+	Display::send_colors(color, w * h);
+	Display::finish();
+}
+
+template <>
+inline void draw_raster<Display>(Display&, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
+{
+	Display::start();
+
+	Display::set_addr_window(x, y, w, h);
+
+	Color curr_color = bgcolor;
+	while (true)
+	{
+		const uint8_t num_pixels = pgm_read_byte(raster++);
+
+		if (num_pixels == 0)
+			break;
+
+		Display::send_colors(curr_color, num_pixels);
+
+		if (curr_color == color)
+			curr_color = bgcolor;
+		else
+			curr_color = color;
+	}
+
+	Display::finish();
+}

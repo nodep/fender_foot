@@ -193,67 +193,13 @@ const uint8_t PROGMEM pot_ring[] =
 
 #define PI 3.14159265
 
-template <typename Canvas>
-void draw_pixel(Canvas& canvas, Coord x, Coord y, Color color)
-{
-	canvas.draw_pixel(x, y, color);
-}
-
-template <typename Canvas>
-void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
-{
-	int16_t f = 1 - r;
-	int16_t ddF_x = 1;
-	int16_t ddF_y = -2 * r;
-	int16_t x = 0;
-	int16_t y = r;
-
-	canvas.start();
-
-	canvas.send_pixel(x0, y0 + r, color);
-	canvas.send_pixel(x0, y0 - r, color);
-	canvas.send_pixel(x0 + r, y0, color);
-	canvas.send_pixel(x0 - r, y0, color);
-
-	while (x < y)
-	{
-		if (f >= 0)
-		{
-			y--;
-			ddF_y += 2;
-			f += ddF_y;
-		}
-
-		x++;
-		ddF_x += 2;
-		f += ddF_x;
-
-		canvas.send_pixel(x0 + x, y0 + y, color);
-		canvas.send_pixel(x0 - x, y0 + y, color);
-		canvas.send_pixel(x0 + x, y0 - y, color);
-		canvas.send_pixel(x0 - x, y0 - y, color);
-		canvas.send_pixel(x0 + y, y0 + x, color);
-		canvas.send_pixel(x0 - y, y0 + x, color);
-		canvas.send_pixel(x0 + y, y0 - x, color);
-		canvas.send_pixel(x0 - y, y0 - x, color);
-	}
-
-	canvas.finish();
-}
-
-void send_pixels(Color color, uint16_t len);
-void send_pixel(uint8_t x, uint8_t y, Color color);
-void send_hline(uint8_t x, uint8_t y, uint8_t len, Color color);
-void send_vline(uint8_t x, uint8_t y, uint8_t len, Color color);
-
-
 int main()
 {
 	init_hw();
 
 	Display::init();
 
-	uint16_t start, dur, draw;
+	uint16_t start, dur;
 	while (true)
 	{
 		//for (double a = 0; a < PI/2; a += PI / 180)
@@ -261,34 +207,47 @@ int main()
 
 		//Display::draw_circle(64, 80, 60, colYellow);	//   3352
 
+		dprint("-----------------\n");
+		
 		start = Watch::cnt();
 		Display d;
-		draw_circle(d, 20, 20, 19, colYellow);
+		fill_circle(d, 20, 20, 19, colBlue);
+		draw_line(d, 0, 0, 100, 100, colBlue);
+		fill_rect(d, 0, 0, 10, 0, colBlack);
 		dur = Watch::cnt() - start;
 		dprint("old: %d\n", dur);
 
+		_delay_ms(1000);
+
 		start = Watch::cnt();
 		Window<40, 40> w(colBlack);
-		draw_circle(w, 20, 20, 19, colGreen);
-		draw = Watch::cnt() - start;
-		dprint("draw: %d\n", draw);
+		fill_circle(w, 20, 20, 19, colGreen);
+		draw_line(w, 0, 0, 39, 39, colGreen);
+		dur = Watch::cnt() - start;
+		dprint("draw: %d\n", dur);
 
 		start = Watch::cnt();
 		Display::blit(w, 0, 0);
 		dur = Watch::cnt() - start;
 		dprint("blt: %d\n", dur);
 
+		_delay_ms(1000);
+
 		start = Watch::cnt();
 		WindowRGB<40, 40> w16(colBlack);
-		draw_circle(w16, 20, 20, 19, colGreen);
-		draw = Watch::cnt() - start;
-		dprint("draw16: %d\n", draw);
+		fill_circle(w16, 20, 20, 19, colRed);
+		draw_line(w16, 0, 0, 39, 39, colRed);
+		fill_rect(w16, 0, 0, 20, 20, colMagenta);
+		fill_rect(w16, 20, 20, 20, 20, colCyan);
+		dur = Watch::cnt() - start;
+		dprint("draw16: %d\n", dur);
 
 		start = Watch::cnt();
 		Display::blit(w16, 0, 0);
 		dur = Watch::cnt() - start;
 		dprint("blt16: %d\n", dur);
 
+		_delay_ms(1000);
 
 		//Display::draw_line(0, 160, 128, 0, colYellow);
 		//Display::fill_rect(0, 150, 128, 10, colGreen);
@@ -305,10 +264,5 @@ int main()
 		//Display::print(buff, false, 0, 0, colWhite, colBlack);
 
 		//Display::draw_raster(pot_ring, 5, 20, 57, 57, colRed, colBlack);
-
-		const uint16_t dur = Watch::cnt() - start;
-		dprint("dur: %d\n", (uint16_t)Watch::ticks2ms(dur));
-
-		_delay_ms(1000);
 	}
 }
