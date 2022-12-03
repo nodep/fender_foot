@@ -208,6 +208,9 @@ int main()
 		//Display::draw_circle(64, 80, 60, colYellow);	//   3352
 
 		dprint("-----------------\n");
+		dprint("size tp: %d\n", sizeof(Window<10, 10>::TwoPixels));
+		dprint("size all: %d\n", sizeof(Window<10, 10>));
+		dprint("size rgb: %d\n", sizeof(WindowRGB<10, 10>));
 		
 		start = Watch::cnt();
 		Display d;

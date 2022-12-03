@@ -138,6 +138,7 @@ static const uint8_t PROGMEM initCommands[] =
 
 void Display::init()
 {
+	// setup the SPI pins
 	mosi::dir_out();
 	sck::dir_out();
 
@@ -186,16 +187,14 @@ void Display::init()
 
 void Display::on()
 {
-	ss::low();
+	Transaction t;
 	send_command(ST77XX_DISPON);
-	ss::high();
 }
 
 void Display::off()
 {
-	ss::low();
+	Transaction t;
 	send_command(ST77XX_DISPOFF);
-	ss::high();
 }
 
 void Display::send_command(const uint8_t cmd)
@@ -207,17 +206,15 @@ void Display::send_command(const uint8_t cmd)
 
 void Display::send_init_command(const uint8_t commandByte, const uint8_t* dataBytes, const uint8_t numDataBytes)
 {
-	ss::low();
+	Transaction t;
 
 	send_command(commandByte);
 
 	for (int i = 0; i < numDataBytes; i++)
 		spi::send(pgm_read_byte(dataBytes++));
-
-	ss::high();
 }
 
-void Display::set_addr_window(const uint8_t x, const uint8_t y, const uint8_t w, const uint8_t h)
+void Display::set_addr_window(const Coord x, const Coord y, const Coord w, const Coord h)
 {
 	const uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
 	const uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);

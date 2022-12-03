@@ -42,8 +42,8 @@ inline uint8_t* pgm_read_bitmap_ptr(const GFXfont* gfxFont)
 
 void Display::send_char(const uint8_t x, const uint8_t y, const unsigned char c, const Color color, const Color bgcolor)
 {
-    if (x >= WIDTH			// Clip right
-        || y >= HEIGHT		// Clip bottom
+    if (x >= Width			// Clip right
+        || y >= Height		// Clip bottom
         || x + 6 - 1 < 0	// Clip left
         || y + 8 - 1 < 0)	// Clip top
         return;
@@ -108,6 +108,8 @@ void Display::send_char_custom(const GFXfont* gfxFont, const uint8_t x, const ui
 
 void Display::print(const char* str, const bool smallFont, const uint8_t x, const uint8_t y, const Color color, const Color bgcolor)
 {
+	Transaction t;
+
 	uint8_t cursor_x = x;
 	uint8_t cursor_y = y;
 
@@ -120,8 +122,6 @@ void Display::print(const char* str, const bool smallFont, const uint8_t x, cons
 	    cursor_y += 14;
     }
 	
-    ss::low();
-
 	while (*str)
 	{
 		const char c = *str++;
@@ -135,7 +135,7 @@ void Display::print(const char* str, const bool smallFont, const uint8_t x, cons
 			}
 			else if (c != '\r')
 			{
-				if (wrap  &&  cursor_x + 6 > WIDTH)
+				if (wrap  &&  cursor_x + 6 > Width)
 				{
 					cursor_x = x;
 					cursor_y += 8;
@@ -163,7 +163,7 @@ void Display::print(const char* str, const bool smallFont, const uint8_t x, cons
 					if (w > 0  &&  h > 0)
 					{
 						const int16_t xo = (int8_t)pgm_read_byte(&glyph->xOffset);
-						if (wrap && cursor_x + xo + w > WIDTH)
+						if (wrap && cursor_x + xo + w > Width)
 						{
 							cursor_x = 0;
 							cursor_y += pgm_read_byte(&gfxFont->yAdvance);
@@ -175,6 +175,4 @@ void Display::print(const char* str, const bool smallFont, const uint8_t x, cons
 			}
 		}
 	}
-
-    ss::high();
 }

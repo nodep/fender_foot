@@ -17,23 +17,54 @@ enum Color : uint8_t
 	colOrange,
 };
 
+using ColorRGB = uint16_t;
+
+const ColorRGB rgbBlack	    = 0x0000;
+const ColorRGB rgbWhite	    = 0xFFFF;
+const ColorRGB rgbRed	    = 0xF800;
+const ColorRGB rgbGreen	    = 0x07E0;
+const ColorRGB rgbBlue	    = 0x001F;
+const ColorRGB rgbCyan	    = 0x07FF;
+const ColorRGB rgbMagenta	= 0xF81F;
+const ColorRGB rgbYellow    = 0xFFE0;
+const ColorRGB rgbOrange    = 0xFC00;
+
+static ColorRGB Color2RGBMap[] =
+{
+	rgbBlack,
+	rgbWhite,
+	rgbRed,
+	rgbGreen,
+	rgbBlue,
+	rgbCyan,
+	rgbMagenta,
+	rgbYellow,
+	rgbOrange,
+};
+
+inline ColorRGB color2rgb(const Color col)
+{
+	return Color2RGBMap[col];
+}
 
 template <typename Canvas>
 void draw_pixel(Canvas& canvas, Coord x, Coord y, Color color)
 {
-	canvas.draw_pixel(x, y, color);
+    typename Canvas::Transaction t;
+
+	canvas.send_pixel(x, y, color);
 }
 
 template <typename Canvas>
 void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 {
+    typename Canvas::Transaction t;
+
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
 	int16_t ddF_y = -2 * r;
 	int16_t x = 0;
 	int16_t y = r;
-
-	canvas.start();
 
 	canvas.send_pixel(x0, y0 + r, color);
 	canvas.send_pixel(x0, y0 - r, color);
@@ -62,14 +93,12 @@ void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 		canvas.send_pixel(x0 + y, y0 - x, color);
 		canvas.send_pixel(x0 - y, y0 - x, color);
 	}
-
-	canvas.finish();
 }
 
 template <typename Canvas>
 void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 {
-	canvas.start();
+	typename Canvas::Transaction t;
 
 	canvas.send_vline(x0, y0 - r, 2 * r + 1, color);
 
@@ -110,8 +139,6 @@ void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 		}
 		px = x;
 	}
-
-	canvas.finish();
 }
 
 template <typename T>
@@ -125,7 +152,7 @@ void swap(T& a1, T& a2)
 template <typename Canvas>
 void draw_line(Canvas& canvas, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const Color color)
 {
-	canvas.start();
+	typename Canvas::Transaction t;
 	
 	const bool steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -166,25 +193,22 @@ void draw_line(Canvas& canvas, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, c
 			err += dx;
 		}
 	}
-
-	canvas.finish();
 }
 
 template <typename Canvas>
 void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, Color color)
 {
-	canvas.start();
+	typename Canvas::Transaction t;
+
 	for (Coord x = x0; x < x0 + w; x++)
 		for (Coord y = x0; y < y0 + h; y++)
 			canvas.send_pixel(x, y, color);
-
-	canvas.finish();
 }
 
 template <typename Canvas>
 void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
 {
-	canvas.start();
+	typename Canvas::Transaction t;
 
 	canvas.set_addr_window(x, y, w, h);
 
@@ -203,6 +227,101 @@ void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord 
 		else
 			curr_color = color;
 	}
-
-	canvas.finish();
 }
+
+template <Coord W, Coord H>
+struct WindowRGB
+{
+	static const Coord Width = W;
+	static const Coord Height = H;
+
+	struct Transaction {
+        Transaction() {}
+        ~Transaction() {}
+    };
+
+	ColorRGB	buffer[Width * Height];
+
+	WindowRGB(ColorRGB colbgnd)
+	{
+		for (ColorRGB& pixel : buffer)
+			pixel = colbgnd;
+	}
+
+	WindowRGB(Color colbgnd)
+		: WindowRGB(color2rgb(colbgnd))
+	{}
+
+	void send_pixel(Coord x, Coord y, ColorRGB color)
+	{
+		buffer[y * Width + x] = color;
+	}
+
+	void send_pixel(Coord x, Coord y, Color color)
+	{
+		send_pixel(x, y, color2rgb(color));
+	}
+
+	void send_vline(Coord x, Coord y, Coord len, Color color)
+	{
+		for (Coord y1 = y; y1 < y + len; ++y1)
+			send_pixel(x, y1, color);
+	}
+};
+
+template <Coord W, Coord H>
+struct Window
+{
+	static const Coord Width = W;
+	static const Coord Height = H;
+
+	struct Transaction {
+        Transaction() {}
+        ~Transaction() {}
+    };
+
+	struct TwoPixels
+	{
+		unsigned int	first : 4;
+		unsigned int	second : 4;
+
+		TwoPixels()
+		{}
+
+		TwoPixels(Color col)
+			: first(col), second(col)
+		{}
+	};
+	
+	TwoPixels buffer[(Width * Height + 1) / 2];
+
+	Window(Color colbgnd)
+	{
+		for (TwoPixels& pixels : buffer)
+			pixels = TwoPixels(colbgnd);
+	}
+
+	void send_vline(Coord x, Coord y, Coord len, Color color)
+	{
+		for (Coord y1 = y; y1 < y + len; ++y1)
+			send_pixel(x, y1, color);
+	}
+
+	void send_pixel(Coord x, Coord y, Color color)
+	{
+		const size_t ndx = Width * y + x;
+		if (ndx & 1)
+			buffer[ndx / 2].second = color;
+		else
+			buffer[ndx / 2].first = color;
+	}
+
+	Color get_color(Coord x, Coord y)
+	{
+		const size_t ndx = Width * y + x;
+		if (ndx & 1)
+			return static_cast<Color>(buffer[ndx / 2].second);
+		
+		return static_cast<Color>(buffer[ndx / 2].first);
+	}
+};
