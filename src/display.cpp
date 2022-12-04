@@ -197,13 +197,6 @@ void Display::off()
 	send_command(ST77XX_DISPOFF);
 }
 
-void Display::send_command(const uint8_t cmd)
-{
-	dc::low();
-	spi::send(cmd);
-	dc::high();
-}
-
 void Display::send_init_command(const uint8_t commandByte, const uint8_t* dataBytes, const uint8_t numDataBytes)
 {
 	Transaction t;

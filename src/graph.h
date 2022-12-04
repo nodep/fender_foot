@@ -52,7 +52,7 @@ void draw_pixel(Canvas& canvas, Coord x, Coord y, Color color)
 {
     typename Canvas::Transaction t;
 
-	canvas.send_pixel(x, y, color);
+	canvas.pixel(x, y, color);
 }
 
 template <typename Canvas>
@@ -66,10 +66,10 @@ void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 	int16_t x = 0;
 	int16_t y = r;
 
-	canvas.send_pixel(x0, y0 + r, color);
-	canvas.send_pixel(x0, y0 - r, color);
-	canvas.send_pixel(x0 + r, y0, color);
-	canvas.send_pixel(x0 - r, y0, color);
+	canvas.pixel(x0, y0 + r, color);
+	canvas.pixel(x0, y0 - r, color);
+	canvas.pixel(x0 + r, y0, color);
+	canvas.pixel(x0 - r, y0, color);
 
 	while (x < y)
 	{
@@ -84,14 +84,14 @@ void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 		ddF_x += 2;
 		f += ddF_x;
 
-		canvas.send_pixel(x0 + x, y0 + y, color);
-		canvas.send_pixel(x0 - x, y0 + y, color);
-		canvas.send_pixel(x0 + x, y0 - y, color);
-		canvas.send_pixel(x0 - x, y0 - y, color);
-		canvas.send_pixel(x0 + y, y0 + x, color);
-		canvas.send_pixel(x0 - y, y0 + x, color);
-		canvas.send_pixel(x0 + y, y0 - x, color);
-		canvas.send_pixel(x0 - y, y0 - x, color);
+		canvas.pixel(x0 + x, y0 + y, color);
+		canvas.pixel(x0 - x, y0 + y, color);
+		canvas.pixel(x0 + x, y0 - y, color);
+		canvas.pixel(x0 - x, y0 - y, color);
+		canvas.pixel(x0 + y, y0 + x, color);
+		canvas.pixel(x0 - y, y0 + x, color);
+		canvas.pixel(x0 + y, y0 - x, color);
+		canvas.pixel(x0 - y, y0 - x, color);
 	}
 }
 
@@ -100,7 +100,7 @@ void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 {
 	typename Canvas::Transaction t;
 
-	canvas.send_vline(x0, y0 - r, 2 * r + 1, color);
+	canvas.vline(x0, y0 - r, 2 * r + 1, color);
 
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
@@ -127,14 +127,14 @@ void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 		// for the SSD1306 library which has an INVERT drawing mode.
 		if (x < y + 1)
 		{
-			canvas.send_vline(x0 + x, y0 - y, 2 * y + 1, color);
-			canvas.send_vline(x0 - x, y0 - y, 2 * y + 1, color);
+			canvas.vline(x0 + x, y0 - y, 2 * y + 1, color);
+			canvas.vline(x0 - x, y0 - y, 2 * y + 1, color);
 		}
 
 		if (y != py)
 		{
-			canvas.send_vline(x0 + py, y0 - px, 2 * px + 1, color);
-			canvas.send_vline(x0 - py, y0 - px, 2 * px + 1, color);
+			canvas.vline(x0 + py, y0 - px, 2 * px + 1, color);
+			canvas.vline(x0 - py, y0 - px, 2 * px + 1, color);
 			py = y;
 		}
 		px = x;
@@ -150,7 +150,7 @@ void swap(T& a1, T& a2)
 }
 
 template <typename Canvas>
-void draw_line(Canvas& canvas, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const Color color)
+void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const Color color)
 {
 	typename Canvas::Transaction t;
 	
@@ -182,9 +182,9 @@ void draw_line(Canvas& canvas, uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, c
 	for (; x0 <= x1; x0++)
 	{
 		if (steep)
-			canvas.send_pixel(y0, x0, color);
+			canvas.pixel(y0, x0, color);
 		else
-			canvas.send_pixel(x0, y0, color);
+			canvas.pixel(x0, y0, color);
 
 		err -= dy;
 		if (err < 0)
@@ -202,7 +202,7 @@ void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, Color color
 
 	for (Coord x = x0; x < x0 + w; x++)
 		for (Coord y = x0; y < y0 + h; y++)
-			canvas.send_pixel(x, y, color);
+			canvas.pixel(x, y, color);
 }
 
 template <typename Canvas>
@@ -220,13 +220,19 @@ void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord 
 		if (num_pixels == 0)
 			break;
 
-		canvas.send_colors(curr_color, num_pixels);
+		canvas.colors(curr_color, num_pixels);
 
 		if (curr_color == color)
 			curr_color = bgcolor;
 		else
 			curr_color = color;
 	}
+}
+
+template <typename Canvas>
+void fill(Canvas& c, Color col)
+{
+	fill_rect(c, 0, 0, Canvas::Width, Canvas::Height, col);
 }
 
 template <Coord W, Coord H>
@@ -252,20 +258,20 @@ struct WindowRGB
 		: WindowRGB(color2rgb(colbgnd))
 	{}
 
-	void send_pixel(Coord x, Coord y, ColorRGB color)
+	void pixel(Coord x, Coord y, ColorRGB color)
 	{
 		buffer[y * Width + x] = color;
 	}
 
-	void send_pixel(Coord x, Coord y, Color color)
+	void pixel(Coord x, Coord y, Color color)
 	{
-		send_pixel(x, y, color2rgb(color));
+		pixel(x, y, color2rgb(color));
 	}
 
-	void send_vline(Coord x, Coord y, Coord len, Color color)
+	void vline(Coord x, Coord y, Coord len, Color color)
 	{
 		for (Coord y1 = y; y1 < y + len; ++y1)
-			send_pixel(x, y1, color);
+			pixel(x, y1, color);
 	}
 };
 
@@ -301,13 +307,13 @@ struct Window
 			pixels = TwoPixels(colbgnd);
 	}
 
-	void send_vline(Coord x, Coord y, Coord len, Color color)
+	void vline(Coord x, Coord y, Coord len, Color color)
 	{
 		for (Coord y1 = y; y1 < y + len; ++y1)
-			send_pixel(x, y1, color);
+			pixel(x, y1, color);
 	}
 
-	void send_pixel(Coord x, Coord y, Color color)
+	void pixel(Coord x, Coord y, Color color)
 	{
 		const size_t ndx = Width * y + x;
 		if (ndx & 1)

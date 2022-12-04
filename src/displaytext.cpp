@@ -55,15 +55,15 @@ void Display::send_char(const uint8_t x, const uint8_t y, const unsigned char c,
         for (int8_t j = 0; j < 8; j++, line >>= 1)
         {
             if (line & 1)
-                send_pixel(x + i, y + j, color);
+                pixel(x + i, y + j, color);
             else if (bgcolor != color)
-                send_pixel(x + i, y + j, bgcolor);
+                pixel(x + i, y + j, bgcolor);
         }
     }
 
     // if opaque, draw vertical line for last column
     if (bgcolor != color)
-        send_vline(x + 5, y, 8, bgcolor);
+        vline(x + 5, y, 8, bgcolor);
 }
 
 void Display::send_char_custom(const GFXfont* gfxFont, const uint8_t x, const uint8_t y, unsigned char c, const Color color)
@@ -87,7 +87,7 @@ void Display::send_char_custom(const GFXfont* gfxFont, const uint8_t x, const ui
                 bits = pgm_read_byte(&bitmap[bo++]);
 
             if (bits & 0x80)
-                send_pixel(x + xo + xx, y + yo + yy, color);
+                pixel(x + xo + xx, y + yo + yy, color);
 
             bits <<= 1;
         }

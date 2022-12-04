@@ -199,23 +199,17 @@ int main()
 
 	Display::init();
 
+	Display d;
+
 	uint16_t start, dur;
 	while (true)
 	{
-		//for (double a = 0; a < PI/2; a += PI / 180)
-		//	Display::draw_pixel(64 + cos(a)*60, 80 + sin(a)*60, colYellow);
-
-		//Display::draw_circle(64, 80, 60, colYellow);	//   3352
+		fill(d, colBlack);
 
 		dprint("-----------------\n");
-		dprint("size tp: %d\n", sizeof(Window<10, 10>::TwoPixels));
-		dprint("size all: %d\n", sizeof(Window<10, 10>));
-		dprint("size rgb: %d\n", sizeof(WindowRGB<10, 10>));
 		
 		start = Watch::cnt();
-		Display d;
 		fill_circle(d, 20, 20, 19, colBlue);
-		draw_line(d, 0, 0, 100, 100, colBlue);
 		fill_rect(d, 0, 0, 10, 0, colBlack);
 		dur = Watch::cnt() - start;
 		dprint("old: %d\n", dur);
@@ -227,12 +221,12 @@ int main()
 		fill_circle(w, 20, 20, 19, colGreen);
 		draw_line(w, 0, 0, 39, 39, colGreen);
 		dur = Watch::cnt() - start;
-		dprint("draw: %d\n", dur);
+		dprint("draw16: %d\n", dur);
 
 		start = Watch::cnt();
 		Display::blit(w, 0, 0);
 		dur = Watch::cnt() - start;
-		dprint("blt: %d\n", dur);
+		dprint("blt16: %d\n", dur);
 
 		_delay_ms(1000);
 
@@ -243,12 +237,12 @@ int main()
 		fill_rect(w16, 0, 0, 20, 20, colMagenta);
 		fill_rect(w16, 20, 20, 20, 20, colCyan);
 		dur = Watch::cnt() - start;
-		dprint("draw16: %d\n", dur);
+		dprint("drawRGB: %d\n", dur);
 
 		start = Watch::cnt();
 		Display::blit(w16, 0, 0);
 		dur = Watch::cnt() - start;
-		dprint("blt16: %d\n", dur);
+		dprint("bltRGB: %d\n", dur);
 
 		_delay_ms(1000);
 
