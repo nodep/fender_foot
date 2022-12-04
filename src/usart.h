@@ -8,13 +8,13 @@ protected:
 
 	constexpr static USART_t& get_usart()
 	{
-		if (UsartNum == 0)
+		if constexpr (UsartNum == 0)
 			return USART0;
-		else if (UsartNum == 1)
+		else if constexpr (UsartNum == 1)
 			return USART1;
-		else if (UsartNum == 2)
+		else if constexpr (UsartNum == 2)
 			return USART2;
-		else if (UsartNum == 3)
+		else if constexpr (UsartNum == 3)
 			return USART3;
 
 		return USART4;

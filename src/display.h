@@ -42,12 +42,16 @@ public:
 	static void off();
 	static void on();
 	
-	static void print(const char* str, bool smallFont, uint8_t x, uint8_t y, Color color, Color bgcolor);
-
 	static void pixel(uint8_t x, uint8_t y, Color col)
 	{
 		set_addr_window(x, y, 1, 1);
 		color(col);
+	}
+
+	static void pixel(uint8_t x, uint8_t y, ColorRGB col)
+	{
+		set_addr_window(x, y, 1, 1);
+		spi::send16(col);
 	}
 
 	static void color(Color col)
@@ -89,8 +93,8 @@ public:
 		Transaction t;
 
 		set_addr_window(x, y, WinWidth, WinHeight);
-		for (Coord x = 0; x < WinHeight; x++)
-			for (Coord y = 0; y < WinWidth; y++)
+		for (Coord y = 0; y < WinWidth; y++)
+			for (Coord x = 0; x < WinHeight; x++)
 				color(w.get_color(x, y));
 	}
 
@@ -109,13 +113,10 @@ protected:
 		spi::send(cmd);
 		dc::high();
 	}
-
-	static void send_char(uint8_t x, uint8_t y, unsigned char c, Color color, Color bgcolor);
-	static void send_char_custom(const GFXfont* gfxFont, Coord x, Coord y, unsigned char c, Color color);
 };
 
 template <>
-inline void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Color color)
+void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Color color)
 {
 	typename Display::Transaction t;
 
@@ -124,7 +125,7 @@ inline void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Col
 }
 
 template <>
-inline void draw_raster<Display>(Display&, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
+void draw_raster<Display>(Display&, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
 {
 	typename Display::Transaction t;
 

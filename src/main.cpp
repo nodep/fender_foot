@@ -14,6 +14,7 @@
 
 #include "pedals.h"
 #include "display.h"
+#include "graphtext.h"
 
 using led = IoPin<'C', 6>;
 using btn = IoPin<'C', 7>;
@@ -201,18 +202,26 @@ int main()
 
 	Display d;
 
-	uint16_t start, dur;
+	//uint16_t start;
+
 	while (true)
 	{
-		fill(d, colBlack);
+		WindowRGB<64, 64> canvas(colBlack);
+		fill(canvas, colBlack);
+		for (Coord r = 19; r < 22; ++r)
+			draw_circle(canvas, 31, 31, r, colWhite);
+		print(canvas, "ujaaa!", true, 20, 20, colGreen, colBlack);
+		d.blit(canvas, 0, 0);
 
+		_delay_ms(500);
+
+		/*
 		dprint("-----------------\n");
-		
+
 		start = Watch::cnt();
 		fill_circle(d, 20, 20, 19, colBlue);
-		fill_rect(d, 0, 0, 10, 0, colBlack);
-		dur = Watch::cnt() - start;
-		dprint("old: %d\n", dur);
+		draw_line(d, 0, 0, 39, 39, colBlue);
+		dprint("old: %d\n", Watch::ms_since(start));
 
 		_delay_ms(1000);
 
@@ -220,13 +229,11 @@ int main()
 		Window<40, 40> w(colBlack);
 		fill_circle(w, 20, 20, 19, colGreen);
 		draw_line(w, 0, 0, 39, 39, colGreen);
-		dur = Watch::cnt() - start;
-		dprint("draw16: %d\n", dur);
+		dprint("draw16: %d\n", Watch::ms_since(start));
 
 		start = Watch::cnt();
 		Display::blit(w, 0, 0);
-		dur = Watch::cnt() - start;
-		dprint("blt16: %d\n", dur);
+		dprint("blt16: %d\n", Watch::ms_since(start));
 
 		_delay_ms(1000);
 
@@ -234,24 +241,13 @@ int main()
 		WindowRGB<40, 40> w16(colBlack);
 		fill_circle(w16, 20, 20, 19, colRed);
 		draw_line(w16, 0, 0, 39, 39, colRed);
-		fill_rect(w16, 0, 0, 20, 20, colMagenta);
-		fill_rect(w16, 20, 20, 20, 20, colCyan);
-		dur = Watch::cnt() - start;
-		dprint("drawRGB: %d\n", dur);
+		dprint("drawRGB: %d\n", Watch::ms_since(start));
 
 		start = Watch::cnt();
 		Display::blit(w16, 0, 0);
-		dur = Watch::cnt() - start;
-		dprint("bltRGB: %d\n", dur);
+		dprint("bltRGB: %d\n", Watch::ms_since(start));
 
 		_delay_ms(1000);
-
-		//Display::draw_line(0, 160, 128, 0, colYellow);
-		//Display::fill_rect(0, 150, 128, 10, colGreen);
-		//Display::fill_circle(64, 64, 63, colBlue);
-
-		//for (uint8_t r = 1; r <= 63; r++)
-		//	Display::draw_circle(63, 63, r, colBlue);
 
 		//char buff[256];
 		//size_t i;
@@ -261,5 +257,6 @@ int main()
 		//Display::print(buff, false, 0, 0, colWhite, colBlack);
 
 		//Display::draw_raster(pot_ring, 5, 20, 57, 57, colRed, colBlack);
+		*/
 	}
 }

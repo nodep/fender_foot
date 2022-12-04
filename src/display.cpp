@@ -5,6 +5,7 @@
 
 #include "iopin.h"
 #include "spimaster.h"
+#include "avrdbg.h"
 
 #include "display.h"
 

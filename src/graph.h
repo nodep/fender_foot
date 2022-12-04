@@ -15,19 +15,30 @@ enum Color : uint8_t
 	colMagenta,
 	colYellow,
 	colOrange,
+	colLightGray,
+	colGray,
+	colDarkGray,
 };
 
 using ColorRGB = uint16_t;
 
-const ColorRGB rgbBlack	    = 0x0000;
-const ColorRGB rgbWhite	    = 0xFFFF;
-const ColorRGB rgbRed	    = 0xF800;
-const ColorRGB rgbGreen	    = 0x07E0;
-const ColorRGB rgbBlue	    = 0x001F;
-const ColorRGB rgbCyan	    = 0x07FF;
-const ColorRGB rgbMagenta	= 0xF81F;
-const ColorRGB rgbYellow    = 0xFFE0;
-const ColorRGB rgbOrange    = 0xFC00;
+constexpr ColorRGB colorRGB(uint8_t r, uint8_t g, uint8_t b)
+{
+	return ((r & 0x1f) << 11) | ((g & 0x3f) << 5) | (b & 0x1f);
+}
+
+constexpr const ColorRGB rgbBlack		= colorRGB( 0,  0,  0);
+constexpr const ColorRGB rgbWhite	    = colorRGB(31, 63, 31);
+constexpr const ColorRGB rgbRed	    	= colorRGB(31,  0,  0);
+constexpr const ColorRGB rgbGreen	    = colorRGB( 0, 63,  0);
+constexpr const ColorRGB rgbBlue	    = colorRGB( 0,  0, 31);
+constexpr const ColorRGB rgbCyan	    = colorRGB( 0, 63, 31);
+constexpr const ColorRGB rgbMagenta		= colorRGB(31,  0, 31);
+constexpr const ColorRGB rgbYellow    	= colorRGB(31, 63,  0);
+constexpr const ColorRGB rgbOrange    	= colorRGB(31, 32,  0);
+constexpr const ColorRGB rgbLightGray 	= colorRGB(24, 48, 24);
+constexpr const ColorRGB rgbGray	    = colorRGB(16, 32, 16);
+constexpr const ColorRGB rgbDarkGray  	= colorRGB( 8, 16,  8);
 
 static ColorRGB Color2RGBMap[] =
 {
@@ -40,6 +51,9 @@ static ColorRGB Color2RGBMap[] =
 	rgbMagenta,
 	rgbYellow,
 	rgbOrange,
+	rgbLightGray,
+	rgbGray,
+	rgbDarkGray,
 };
 
 inline ColorRGB color2rgb(const Color col)
@@ -47,16 +61,16 @@ inline ColorRGB color2rgb(const Color col)
 	return Color2RGBMap[col];
 }
 
-template <typename Canvas>
-void draw_pixel(Canvas& canvas, Coord x, Coord y, Color color)
+template <typename Canvas, typename ColorT>
+void draw_pixel(Canvas& canvas, Coord x, Coord y, ColorT color)
 {
     typename Canvas::Transaction t;
 
 	canvas.pixel(x, y, color);
 }
 
-template <typename Canvas>
-void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
+template <typename Canvas, typename ColorT>
+void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, ColorT color)
 {
     typename Canvas::Transaction t;
 
@@ -95,8 +109,8 @@ void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
 	}
 }
 
-template <typename Canvas>
-void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, Color color)
+template <typename Canvas, typename ColorT>
+void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, ColorT color)
 {
 	typename Canvas::Transaction t;
 
@@ -149,8 +163,8 @@ void swap(T& a1, T& a2)
 	a2 = temp;
 }
 
-template <typename Canvas>
-void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const Color color)
+template <typename Canvas, typename ColorT>
+void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const ColorT color)
 {
 	typename Canvas::Transaction t;
 	
@@ -195,8 +209,8 @@ void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const Col
 	}
 }
 
-template <typename Canvas>
-void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, Color color)
+template <typename Canvas, typename ColorT>
+void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, ColorT color)
 {
 	typename Canvas::Transaction t;
 
@@ -205,8 +219,8 @@ void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, Color color
 			canvas.pixel(x, y, color);
 }
 
-template <typename Canvas>
-void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
+template <typename Canvas, typename ColorT>
+void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, ColorT color, ColorT bgcolor)
 {
 	typename Canvas::Transaction t;
 
@@ -229,8 +243,8 @@ void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord 
 	}
 }
 
-template <typename Canvas>
-void fill(Canvas& c, Color col)
+template <typename Canvas, typename ColorT>
+void fill(Canvas& c, ColorT col)
 {
 	fill_rect(c, 0, 0, Canvas::Width, Canvas::Height, col);
 }
@@ -268,10 +282,15 @@ struct WindowRGB
 		pixel(x, y, color2rgb(color));
 	}
 
-	void vline(Coord x, Coord y, Coord len, Color color)
+	void vline(Coord x, Coord y, Coord len, ColorRGB color)
 	{
 		for (Coord y1 = y; y1 < y + len; ++y1)
 			pixel(x, y1, color);
+	}
+
+	void vline(Coord x, Coord y, Coord len, Color color)
+	{
+		vline(x, y, len, color2rgb(color));
 	}
 };
 

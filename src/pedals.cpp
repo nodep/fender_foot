@@ -94,7 +94,7 @@ PedalEvent Pedals::get_event()
 
 	if (received == 0			// no active reception
 		&&  events.empty()		// no unhandled events
-		&&  (REFRESH_DELAY == 0  ||  Watch::ms_passed_since(REFRESH_DELAY, last_reception)))
+		&&  (REFRESH_DELAY == 0  ||  Watch::has_ms_passed_since(REFRESH_DELAY, last_reception)))
 	{
 		refresh_ftsw_display();
 		refresh_ftsw_leds();
@@ -305,7 +305,7 @@ bool Pedals::send(const uint8_t b)
 	// wait for the byte to appear on RX because
 	// these are connected on the same bus
 	const uint16_t started = Watch::cnt();
-	while (!Watch::ms_passed_since(1, started))
+	while (!Watch::has_ms_passed_since(1, started))
 	{
 		uint8_t d = 0;
 		if (read_byte(d))
@@ -340,7 +340,7 @@ bool Pedals::send_message()
 	const uint16_t started = Watch::cnt();
 	uint8_t ack = 0;
 	bool byte_read = false;
-	while (!Watch::ms_passed_since(2, started))
+	while (!Watch::has_ms_passed_since(2, started))
 	{
 		if (read_byte(ack))
 		{

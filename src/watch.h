@@ -15,8 +15,13 @@ public:
 		return ms * (F_CPU / 1000) / get_div();
 	}
 
-	static bool ms_passed_since(const uint16_t ms, const uint16_t since)
+	static bool has_ms_passed_since(const uint16_t ms, const uint16_t since)
 	{
 		return static_cast<uint32_t>(cnt() - since) >= ms2ticks(ms);
+	}
+
+	static uint16_t ms_since(const uint16_t since)
+	{
+		return ticks2ms(cnt() - since);
 	}
 };
