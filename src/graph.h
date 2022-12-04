@@ -28,17 +28,17 @@ constexpr ColorRGB colorRGB(uint8_t r, uint8_t g, uint8_t b)
 }
 
 constexpr const ColorRGB rgbBlack		= colorRGB( 0,  0,  0);
-constexpr const ColorRGB rgbWhite	    = colorRGB(31, 63, 31);
-constexpr const ColorRGB rgbRed	    	= colorRGB(31,  0,  0);
-constexpr const ColorRGB rgbGreen	    = colorRGB( 0, 63,  0);
-constexpr const ColorRGB rgbBlue	    = colorRGB( 0,  0, 31);
-constexpr const ColorRGB rgbCyan	    = colorRGB( 0, 63, 31);
+constexpr const ColorRGB rgbWhite		= colorRGB(31, 63, 31);
+constexpr const ColorRGB rgbRed			= colorRGB(31,  0,  0);
+constexpr const ColorRGB rgbGreen		= colorRGB( 0, 63,  0);
+constexpr const ColorRGB rgbBlue		= colorRGB( 0,  0, 31);
+constexpr const ColorRGB rgbCyan		= colorRGB( 0, 63, 31);
 constexpr const ColorRGB rgbMagenta		= colorRGB(31,  0, 31);
-constexpr const ColorRGB rgbYellow    	= colorRGB(31, 63,  0);
-constexpr const ColorRGB rgbOrange    	= colorRGB(31, 32,  0);
-constexpr const ColorRGB rgbLightGray 	= colorRGB(24, 48, 24);
-constexpr const ColorRGB rgbGray	    = colorRGB(16, 32, 16);
-constexpr const ColorRGB rgbDarkGray  	= colorRGB( 8, 16,  8);
+constexpr const ColorRGB rgbYellow		= colorRGB(31, 63,  0);
+constexpr const ColorRGB rgbOrange		= colorRGB(31, 32,  0);
+constexpr const ColorRGB rgbLightGray	= colorRGB(24, 48, 24);
+constexpr const ColorRGB rgbGray		= colorRGB(16, 32, 16);
+constexpr const ColorRGB rgbDarkGray	= colorRGB( 8, 16,  8);
 
 static ColorRGB Color2RGBMap[] =
 {
@@ -64,7 +64,7 @@ inline ColorRGB color2rgb(const Color col)
 template <typename Canvas, typename ColorT>
 void draw_pixel(Canvas& canvas, Coord x, Coord y, ColorT color)
 {
-    typename Canvas::Transaction t;
+	typename Canvas::Transaction t;
 
 	canvas.pixel(x, y, color);
 }
@@ -72,7 +72,7 @@ void draw_pixel(Canvas& canvas, Coord x, Coord y, ColorT color)
 template <typename Canvas, typename ColorT>
 void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, ColorT color)
 {
-    typename Canvas::Transaction t;
+	typename Canvas::Transaction t;
 
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
@@ -256,9 +256,9 @@ struct WindowRGB
 	static const Coord Height = H;
 
 	struct Transaction {
-        Transaction() {}
-        ~Transaction() {}
-    };
+		Transaction() = default;
+		~Transaction() = default;
+	};
 
 	ColorRGB	buffer[Width * Height];
 
@@ -301,9 +301,9 @@ struct Window
 	static const Coord Height = H;
 
 	struct Transaction {
-        Transaction() {}
-        ~Transaction() {}
-    };
+		Transaction() = default;
+		~Transaction() = default;
+	};
 
 	struct TwoPixels
 	{

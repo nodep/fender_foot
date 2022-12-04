@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <math.h>
 
 #include <util/delay.h>
@@ -176,87 +177,142 @@ void test_pedals()
 	}
 }
 
-const uint8_t PROGMEM pot_ring[] =
-{
- 23, 11, 42, 19, 36, 23, 32, 27, 28, 31, 25, 33, 23, 35, 20, 39,
- 17, 16,  9, 16, 15, 14, 15, 14, 14, 12, 19, 12, 13, 11, 23, 11,
- 11, 11, 25, 11,  9, 11, 27, 11,  8, 10, 29, 10,  7, 10, 31, 10,
-  6,  9, 33,  9,  5,  9, 35,  9,  4,  9, 35,  9,  3,  9, 37,  9,
-  2,  9, 37,  9,  2,  8, 39,  8,  2,  8, 39,  8,  1,  9, 39, 17,
- 41, 16, 41, 16, 41, 16, 41, 16, 41, 16, 41, 16, 41, 16, 41, 16,
- 41, 17, 39,  9,  1,  8, 39,  8,  2,  8, 39,  8,  2,  9, 37,  9,
-  2,  9, 37,  9,  3,  9, 35,  9,  4,  9, 35,  9,  5,  9, 33,  9,
-  6, 10, 31, 10,  7, 10, 29, 10,  8, 11, 27, 11,  9, 11, 25, 11,
- 11, 11, 23, 11, 13, 12, 19, 12, 14, 14, 15, 14, 15, 16,  9, 16,
- 17, 39, 20, 35, 23, 33, 25, 31, 28, 27, 32, 23, 36, 19, 42, 11,
- 23, 0
+#define PI 3.14159265
+
+const int DIAL_ARC_POINTS = 85;
+
+struct { Coord x, y; } const dial_arc[DIAL_ARC_POINTS] PROGMEM = {
+{ 6,34},{ 5,33},{ 4,32},{ 4,31},{ 3,30},{ 3,29},{ 2,28},{ 2,27},{ 2,26},{ 1,25},
+{ 1,24},{ 1,23},{ 1,22},{ 1,21},{ 1,20},{ 1,19},{ 1,18},{ 1,17},{ 2,16},{ 2,15},
+{ 2,14},{ 3,13},{ 3,12},{ 4,11},{ 4,10},{ 5, 9},{ 6, 8},{ 7, 7},{ 7, 7},{ 8, 6},
+{ 9, 5},{10, 4},{11, 4},{12, 3},{13, 3},{14, 2},{15, 2},{16, 2},{17, 1},{18, 1},
+{19, 1},{20, 1},{21, 1},{22, 1},{23, 1},{24, 1},{25, 1},{26, 2},{27, 2},{28, 2},
+{29, 3},{30, 3},{31, 4},{32, 4},{33, 5},{34, 6},{35, 7},{35, 7},{36, 8},{37, 9},
+{38,10},{38,11},{39,12},{39,13},{40,14},{40,15},{40,16},{41,17},{41,18},{41,19},
+{41,20},{41,21},{41,22},{41,23},{41,24},{41,25},{40,26},{40,27},{40,28},{39,29},
+{39,30},{38,31},{38,32},{37,33},{36,34}
 };
 
-#define PI 3.14159265
+template <typename Canvas>
+struct ThickBrush
+{
+	using Transaction = typename Canvas::Transaction;
+
+	Canvas& canvas;
+
+	ThickBrush(Canvas& w)
+		: canvas(w)
+	{}
+
+	void pixel(Coord x, Coord y, Color col)
+	{
+		canvas.pixel(x, y, col);
+		canvas.pixel(x+1, y, col);
+		canvas.pixel(x-1, y, col);
+		canvas.pixel(x, y+1, col);
+		canvas.pixel(x, y-1, col);
+	}
+};
+
+uint16_t get_text_width(const char* text, bool smallFont)
+{
+	if (smallFont)
+		return 5 * strlen(text);
+
+	const uint8_t first = pgm_read_byte(&largeFont->first);
+	uint16_t result = 0;
+	while (*text)
+	{
+		const GFXglyph* glyph = pgm_read_glyph_ptr(largeFont, *text - first);
+		const uint8_t w = pgm_read_byte(&glyph->xAdvance);
+
+		result += w;
+
+		++text;
+	}
+
+	return result;
+}
+
+template <typename Canvas, typename ColorT>
+void draw_dial(Canvas& canvas, Coord x, Coord y, uint8_t position, ColorT col)
+{
+	static_assert(Canvas::Width >= 43  &&  Canvas::Height >= 36, "Canvas is too small for draw_dial()");
+
+	ThickBrush<Canvas> tb(canvas);
+
+	{
+		typename Canvas::Transaction t;
+
+		// draw the arc
+		for (const auto& pt : dial_arc)
+			tb.pixel(pgm_read_byte(&pt.x) + x, pgm_read_byte(&pt.y) + y, col);
+	}
+	
+	// draw the dial line
+	const Coord x1 = pgm_read_byte(&dial_arc[position].x) + x;
+	const Coord y1 = pgm_read_byte(&dial_arc[position].y) + y;
+
+	draw_line(tb, x + 20, y + 20, x1, y1, col);
+}
+
+void draw_dial_at(const char* name, Coord x, Coord y, Color col)
+{
+	{
+		Window<43, 36> win(colBlack);
+		draw_dial(win, 0, 0, rand() % DIAL_ARC_POINTS, col);
+		Display::blit(win, x + 11, y);
+	}
+
+	Window<64, 8> win(colBlack);
+	const uint16_t width = get_text_width(name, true);
+	const Coord textx = width > 64 ? 0 : (64 - width) / 2;
+	print(win, name, true, textx, 0, col, colBlack);
+	Display::blit(win, x, y + 38);
+}
+
+void refresh_screen()
+{
+	Display d;
+
+	const uint8_t battery = rand() % 0x80;
+
+	fill_rect(d, 0, 0, battery, 3, colGreen);
+	fill_rect(d, battery, 0, 127 - battery, 3, colBlack);
+
+	{
+		const char* names[] = {"Reverb", "Chorus", "Delay"};
+		const uint8_t namendx = rand() % 3;
+		const uint16_t width = get_text_width(names[namendx], false);
+
+		const Coord x = width > 128 ? 0 : (128 - width) / 2;
+
+		Window<128, 19> win(colBlack);
+		print(win, names[namendx], false, x, 0, colWhite, colBlack);
+		d.blit(win, 0, 10);
+	}
+
+	// the dials
+	draw_dial_at("pot 1",  0, 36, colGreen);
+	draw_dial_at("pot 2", 64, 36, colBlue);
+	draw_dial_at("pot 3",  0, 95, colRed);
+	draw_dial_at("wet/dry", 64, 95, colWhite);
+}
 
 int main()
 {
 	init_hw();
 
-	Display::init();
-
 	Display d;
 
-	//uint16_t start;
+	d.init();
+
+	fill(d, colBlack);
 
 	while (true)
 	{
-		WindowRGB<64, 64> canvas(colBlack);
-		fill(canvas, colBlack);
-		for (Coord r = 19; r < 22; ++r)
-			draw_circle(canvas, 31, 31, r, colWhite);
-		print(canvas, "ujaaa!", true, 20, 20, colGreen, colBlack);
-		d.blit(canvas, 0, 0);
+		refresh_screen();
 
 		_delay_ms(500);
-
-		/*
-		dprint("-----------------\n");
-
-		start = Watch::cnt();
-		fill_circle(d, 20, 20, 19, colBlue);
-		draw_line(d, 0, 0, 39, 39, colBlue);
-		dprint("old: %d\n", Watch::ms_since(start));
-
-		_delay_ms(1000);
-
-		start = Watch::cnt();
-		Window<40, 40> w(colBlack);
-		fill_circle(w, 20, 20, 19, colGreen);
-		draw_line(w, 0, 0, 39, 39, colGreen);
-		dprint("draw16: %d\n", Watch::ms_since(start));
-
-		start = Watch::cnt();
-		Display::blit(w, 0, 0);
-		dprint("blt16: %d\n", Watch::ms_since(start));
-
-		_delay_ms(1000);
-
-		start = Watch::cnt();
-		WindowRGB<40, 40> w16(colBlack);
-		fill_circle(w16, 20, 20, 19, colRed);
-		draw_line(w16, 0, 0, 39, 39, colRed);
-		dprint("drawRGB: %d\n", Watch::ms_since(start));
-
-		start = Watch::cnt();
-		Display::blit(w16, 0, 0);
-		dprint("bltRGB: %d\n", Watch::ms_since(start));
-
-		_delay_ms(1000);
-
-		//char buff[256];
-		//size_t i;
-		//for (i = 0; i < sizeof(buff) - 16; ++i)
-		//	buff[i] = i + 16;
-		//buff[i] = '\0';
-		//Display::print(buff, false, 0, 0, colWhite, colBlack);
-
-		//Display::draw_raster(pot_ring, 5, 20, 57, 57, colRed, colBlack);
-		*/
 	}
 }

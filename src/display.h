@@ -44,6 +44,7 @@ public:
 	
 	static void pixel(uint8_t x, uint8_t y, Color col)
 	{
+		dprint("%d %d\n", x, y);
 		set_addr_window(x, y, 1, 1);
 		color(col);
 	}
@@ -78,14 +79,7 @@ public:
 	}
 
 	template <typename Win>
-	static void blit(Win& w, Coord x, Coord y)
-	{
-		Transaction t;
-
-		set_addr_window(x, y, Win::Width, Win::Height);
-		for (ColorRGB col : w.buffer)
-			spi::send16(col);
-	}
+	static void blit(Win& w, Coord x, Coord y) = delete;
 
 	template <Coord WinWidth, Coord WinHeight>
 	static void blit(Window<WinWidth, WinHeight>& w, Coord x, Coord y)
@@ -93,9 +87,19 @@ public:
 		Transaction t;
 
 		set_addr_window(x, y, WinWidth, WinHeight);
-		for (Coord y = 0; y < WinWidth; y++)
-			for (Coord x = 0; x < WinHeight; x++)
+		for (Coord y = 0; y < WinHeight; y++)
+			for (Coord x = 0; x < WinWidth; x++)
 				color(w.get_color(x, y));
+	}
+
+	template <Coord WinWidth, Coord WinHeight>
+	static void blit(WindowRGB<WinWidth, WinHeight>& w, Coord x, Coord y)
+	{
+		Transaction t;
+
+		set_addr_window(x, y, WinWidth, WinHeight);
+		for (ColorRGB col : w.buffer)
+			spi::send16(col);
 	}
 
 protected:
@@ -116,7 +120,7 @@ protected:
 };
 
 template <>
-void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Color color)
+inline void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Color color)
 {
 	typename Display::Transaction t;
 
@@ -125,7 +129,7 @@ void fill_rect<Display>(Display&, Coord x, Coord y, Coord w, Coord h, Color colo
 }
 
 template <>
-void draw_raster<Display>(Display&, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
+inline void draw_raster<Display>(Display&, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor)
 {
 	typename Display::Transaction t;
 

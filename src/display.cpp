@@ -216,7 +216,7 @@ void Display::set_addr_window(const Coord x, const Coord y, const Coord w, const
 	send_command(ST77XX_CASET); // column addr set
 	spi::send32(xa);
 
-	send_command(ST77XX_RASET); // ryow addr set
+	send_command(ST77XX_RASET); // row addr set
 	spi::send32(ya);
 
 	send_command(ST77XX_RAMWR); // write to RAM
