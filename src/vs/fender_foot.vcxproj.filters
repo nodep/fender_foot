@@ -42,6 +42,21 @@
     <ClInclude Include="..\spimaster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="avr\io.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="avr\ioavr128da48.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="avr\pgmspace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\fonts\FreeSans9pt7b.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\fonts\glcdfont.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avrdbg.cpp">
@@ -57,6 +72,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\display.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\graph.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

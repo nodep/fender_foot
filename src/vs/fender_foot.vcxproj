@@ -21,6 +21,8 @@
   <ItemGroup>
     <ClInclude Include="..\avrdbg.h" />
     <ClInclude Include="..\display.h" />
+    <ClInclude Include="..\fonts\FreeSans9pt7b.h" />
+    <ClInclude Include="..\fonts\glcdfont.h" />
     <ClInclude Include="..\iopin.h" />
     <ClInclude Include="..\pedals.h" />
     <ClInclude Include="..\ring.h" />
@@ -28,10 +30,14 @@
     <ClInclude Include="..\timera.h" />
     <ClInclude Include="..\usart.h" />
     <ClInclude Include="..\watch.h" />
+    <ClInclude Include="avr\io.h" />
+    <ClInclude Include="avr\ioavr128da48.h" />
+    <ClInclude Include="avr\pgmspace.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avrdbg.cpp" />
     <ClCompile Include="..\display.cpp" />
+    <ClCompile Include="..\graph.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="stub.cpp" />
     <ClCompile Include="..\pedals.cpp" />

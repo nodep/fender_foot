@@ -69,7 +69,7 @@ enum ST77Constants : uint8_t
 	ST7735_GMCTRP1 = 0xE0,
 	ST7735_GMCTRN1 = 0xE1,
 
-	ST_CMD_DELAY = 0x80,		// special signifier for = command lists
+	ST_CMD_DELAY = 0x80,		// special signifier for command lists
 };
 
 static const uint8_t PROGMEM initCommands[] =
@@ -104,35 +104,19 @@ static const uint8_t PROGMEM initCommands[] =
 	ST7735_VMCTR1, 1,					// Power control, 1 arg, no delay:
 		0x0E,
 	ST77XX_INVOFF, 0,					// Don't invert display, no args
-	ST77XX_MADCTL, 1,					// Mem access ctl (directions), 1 arg:
-		0xC8,							// row/col addr, bottom-top refresh
+	ST77XX_MADCTL, 1,					// Rotation:
+		0x00,							// 0x00: portrait, pins up
+										// 0xA0: landscape, pins right
+										// 0xC0: portrait, pins down
+										// 0x60: landscape, pins left
+
 	ST77XX_COLMOD, 1,					// set color mode, 1 arg, no delay:
 		0x05,							// 16-bit color
 
-	ST77XX_CASET, 4,					// Column addr set, 4 args, no delay:
-		0x00, 0x00,						// XSTART = 0
-		0x00, 0x7F,						// XEND = 127
-	ST77XX_RASET, 4,					// Row addr set, 4 args, no delay:
-		0x00, 0x00,						// XSTART = 0
-		0x00, 0x9F,						// XEND = 159
-
-	ST7735_GMCTRP1, 16,					// Gamma Adjustments (pos. polarity), 16 args + delay:
-		0x02, 0x1c, 0x07, 0x12,			// (Not entirely necessary, but provides
-		0x37, 0x32, 0x29, 0x2d,			//  accurate colors)
-		0x29, 0x25, 0x2B, 0x39,
-		0x00, 0x01, 0x03, 0x10,
-	ST7735_GMCTRN1, 16,					// Gamma Adjustments (neg. polarity), 16 args + delay:
-		0x03, 0x1d, 0x07, 0x06,			// (Not entirely necessary, but provides
-		0x2E, 0x2C, 0x29, 0x2D,			//  accurate colors)
-		0x2E, 0x2E, 0x37, 0x3F,
-		0x00, 0x00, 0x02, 0x10,
 	ST77XX_NORON, ST_CMD_DELAY,			// Normal display on, no args, w/delay
 		10,								// 10 ms delay
 	ST77XX_DISPON, ST_CMD_DELAY,		// Main screen turn on, no args w/delay
 		100,							// 100 ms delay
-
-	ST77XX_MADCTL, 1,					// change MADCTL color filter
-		0xC0,
 
 	0x00,								// EOF
 };

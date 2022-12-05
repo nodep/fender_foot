@@ -31,7 +31,7 @@ protected:
 			return SPI_PRESC_DIV16_gc | SPI_CLK2X_bm;
 		else if constexpr (Speed == 5)
 			return SPI_PRESC_DIV4_gc;
-		
+
 		return SPI_PRESC_DIV4_gc | SPI_CLK2X_bm;
 	}
 

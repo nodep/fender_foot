@@ -16,23 +16,14 @@ using rst	= IoPin<'B', 0>;
 using dc	= IoPin<'B', 1>;
 using spi	= SpiMaster<0, 6>;
 
-struct GFXfont;
-
 class Display
 {
 public:
 
 	struct Transaction
 	{
-		Transaction()
-		{
-			ss::low();
-		}
-
-		~Transaction()
-		{
-			ss::high();
-		}
+		Transaction()	{ ss::low(); }
+		~Transaction()	{ ss::high(); }
 	};
 
 	static const Coord Width = 128;
@@ -41,7 +32,7 @@ public:
 	static void init();
 	static void off();
 	static void on();
-	
+
 	static void pixel(uint8_t x, uint8_t y, Color col)
 	{
 		dprint("%d %d\n", x, y);
@@ -110,7 +101,7 @@ protected:
 	friend void draw_raster<Display>(Display& d, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, Color color, Color bgcolor);
 
 	static void send_init_command(uint8_t commandByte, const uint8_t* dataBytes, uint8_t numDataBytes);
-	static void set_addr_window(Coord x, Coord y, Coord w,  Coord h);
+	static void set_addr_window(Coord x, Coord y, Coord w, Coord h);
 	static void send_command(uint8_t cmd)
 	{
 		dc::low();
@@ -151,3 +142,4 @@ inline void draw_raster<Display>(Display&, const uint8_t* raster, Coord x, Coord
 			curr_color = color;
 	}
 }
+ 

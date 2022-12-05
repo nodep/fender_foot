@@ -17,7 +17,7 @@ protected:
 	{
 		return (&((&PORTA)[Port - 'A'].PIN0CTRL))[PinNum];
 	}
-	
+
 	static VPORT_t& get_vport()
 	{
 		return (&VPORTA)[Port - 'A'];

@@ -24,7 +24,7 @@ using ColorRGB = uint16_t;
 
 constexpr ColorRGB colorRGB(uint8_t r, uint8_t g, uint8_t b)
 {
-	return ((r & 0x1f) << 11) | ((g & 0x3f) << 5) | (b & 0x1f);
+	return static_cast<ColorRGB>(((r & 0x1f) << 11) | ((g & 0x3f) << 5) | (b & 0x1f));
 }
 
 constexpr const ColorRGB rgbBlack		= colorRGB( 0,  0,  0);
@@ -40,7 +40,7 @@ constexpr const ColorRGB rgbLightGray	= colorRGB(24, 48, 24);
 constexpr const ColorRGB rgbGray		= colorRGB(16, 32, 16);
 constexpr const ColorRGB rgbDarkGray	= colorRGB( 8, 16,  8);
 
-static ColorRGB Color2RGBMap[] =
+constexpr static const ColorRGB Color2RGBMap[] =
 {
 	rgbBlack,
 	rgbWhite,
@@ -56,7 +56,7 @@ static ColorRGB Color2RGBMap[] =
 	rgbDarkGray,
 };
 
-inline ColorRGB color2rgb(const Color col)
+constexpr inline ColorRGB color2rgb(const Color col)
 {
 	return Color2RGBMap[col];
 }
@@ -167,7 +167,7 @@ template <typename Canvas, typename ColorT>
 void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const ColorT color)
 {
 	typename Canvas::Transaction t;
-	
+
 	const bool steep = abs(y1 - y0) > abs(x1 - x0);
 
 	if (steep)
@@ -220,21 +220,33 @@ void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, ColorT colo
 }
 
 template <typename Canvas, typename ColorT>
-void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x, Coord y, Coord w, Coord h, ColorT color, ColorT bgcolor)
+void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x0, Coord y0, Coord w, Coord h, ColorT color, ColorT bgcolor)
 {
 	typename Canvas::Transaction t;
 
-	canvas.set_addr_window(x, y, w, h);
-
 	Color curr_color = bgcolor;
+
+	Coord x = x0;
+	Coord y = y0;
+
 	while (true)
 	{
 		const uint8_t num_pixels = pgm_read_byte(raster++);
 
+		// EOF?
 		if (num_pixels == 0)
 			break;
 
-		canvas.colors(curr_color, num_pixels);
+		for (uint8_t i = 0; i < num_pixels; i++)
+		{
+			canvas.pixel(x, y, curr_color);
+
+			if (++x == x0 + w)
+			{
+				x = x0;
+				++y;
+			}
+		}
 
 		if (curr_color == color)
 			curr_color = bgcolor;
@@ -250,8 +262,10 @@ void fill(Canvas& c, ColorT col)
 }
 
 template <Coord W, Coord H>
-struct WindowRGB
+class WindowRGB
 {
+public:
+
 	static const Coord Width = W;
 	static const Coord Height = H;
 
@@ -259,8 +273,6 @@ struct WindowRGB
 		Transaction() = default;
 		~Transaction() = default;
 	};
-
-	ColorRGB	buffer[Width * Height];
 
 	WindowRGB(ColorRGB colbgnd)
 	{
@@ -274,7 +286,8 @@ struct WindowRGB
 
 	void pixel(Coord x, Coord y, ColorRGB color)
 	{
-		buffer[y * Width + x] = color;
+		if (x < Width  &&  y < Height)
+			buffer[y * Width + x] = color;
 	}
 
 	void pixel(Coord x, Coord y, Color color)
@@ -292,11 +305,17 @@ struct WindowRGB
 	{
 		vline(x, y, len, color2rgb(color));
 	}
+
+private:
+
+	ColorRGB	buffer[Width * Height];
 };
 
 template <Coord W, Coord H>
-struct Window
+class Window
 {
+public:
+
 	static const Coord Width = W;
 	static const Coord Height = H;
 
@@ -304,21 +323,6 @@ struct Window
 		Transaction() = default;
 		~Transaction() = default;
 	};
-
-	struct TwoPixels
-	{
-		unsigned int	first : 4;
-		unsigned int	second : 4;
-
-		TwoPixels()
-		{}
-
-		TwoPixels(Color col)
-			: first(col), second(col)
-		{}
-	};
-	
-	TwoPixels buffer[(Width * Height + 1) / 2];
 
 	Window(Color colbgnd)
 	{
@@ -334,11 +338,14 @@ struct Window
 
 	void pixel(Coord x, Coord y, Color color)
 	{
-		const size_t ndx = Width * y + x;
-		if (ndx & 1)
-			buffer[ndx / 2].second = color;
-		else
-			buffer[ndx / 2].first = color;
+		if (x < Width  &&  y < Height)
+		{
+			const size_t ndx = Width * y + x;
+			if (ndx & 1)
+				buffer[ndx / 2].second = color;
+			else
+				buffer[ndx / 2].first = color;
+		}
 	}
 
 	Color get_color(Coord x, Coord y)
@@ -346,7 +353,23 @@ struct Window
 		const size_t ndx = Width * y + x;
 		if (ndx & 1)
 			return static_cast<Color>(buffer[ndx / 2].second);
-		
+
 		return static_cast<Color>(buffer[ndx / 2].first);
 	}
+
+private:
+
+	struct TwoPixels
+	{
+		unsigned int	first : 4;
+		unsigned int	second : 4;
+
+		TwoPixels() = default;
+
+		TwoPixels(Color col)
+			: first(col), second(col)
+		{}
+	};
+
+	TwoPixels buffer[(Width * Height + 1) / 2];
 };

@@ -9,6 +9,7 @@ VPORT_t		VPORTs[8];
 PORT_t		PORTs[8];
 USART_t		USARTs[5];
 TCA_t		TCAs[2];
+SPI_t		SPIs[2];
 
 void _delay_ms(const uint16_t d)
 {

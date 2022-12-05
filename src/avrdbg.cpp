@@ -28,13 +28,13 @@ void dbgInit()
 	mydbgout.flags = _FDEV_SETUP_WRITE;
 	mydbgout.udata = 0;
 
-    stdout = &mydbgout;
+	stdout = &mydbgout;
 #endif
 
 	// USART1.TX is on C0 on avr128da48,
 	// and we have to configure it for output
 	IoPin<'C', 0>::dir_out();
-	
+
 	// baud rate calc
 	DebugUsart::set_baud(230400);
 	// we only want TX, RX is not needed

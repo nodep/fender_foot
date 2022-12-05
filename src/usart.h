@@ -47,7 +47,7 @@ public:
 			b = get_usart().RXDATAL;
 			return true;
 		}
-		
+
 		return false;
 	}
 };

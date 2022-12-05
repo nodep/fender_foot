@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
-#include <math.h>
 
 #include <util/delay.h>
 #include <avr/pgmspace.h>
@@ -29,19 +27,19 @@ void init_hw()
 #elif F_CPU == 2000000
 	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_2M_gc;
 #elif F_CPU == 3000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_3M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_3M_gc;
 #elif F_CPU == 4000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_4M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_4M_gc;
 #elif F_CPU == 8000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_8M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_8M_gc;
 #elif F_CPU == 12000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_12M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_12M_gc;
 #elif F_CPU == 16000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_16M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_16M_gc;
 #elif F_CPU == 20000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_20M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_20M_gc;
 #elif F_CPU == 24000000
-    CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
+	CLKCTRL.OSCHFCTRLA = CLKCTRL_AUTOTUNE_bm | CLKCTRL_FRQSEL_24M_gc;
 #else
 	#error Unknown F_CPU setting
 #endif
@@ -147,7 +145,7 @@ void test_pedals()
 			{
 				if (!pedals.ftsw_present)
 					dprint("pos %d\n", pedals.exp_position);
-				
+
 				num = static_cast<uint16_t>(pedals.exp_position >> 3);
 				if (num > 999)
 					num = 999;
@@ -176,8 +174,6 @@ void test_pedals()
 		}
 	}
 }
-
-#define PI 3.14159265
 
 const int DIAL_ARC_POINTS = 85;
 
@@ -214,26 +210,6 @@ struct ThickBrush
 	}
 };
 
-uint16_t get_text_width(const char* text, bool smallFont)
-{
-	if (smallFont)
-		return 5 * strlen(text);
-
-	const uint8_t first = pgm_read_byte(&largeFont->first);
-	uint16_t result = 0;
-	while (*text)
-	{
-		const GFXglyph* glyph = pgm_read_glyph_ptr(largeFont, *text - first);
-		const uint8_t w = pgm_read_byte(&glyph->xAdvance);
-
-		result += w;
-
-		++text;
-	}
-
-	return result;
-}
-
 template <typename Canvas, typename ColorT>
 void draw_dial(Canvas& canvas, Coord x, Coord y, uint8_t position, ColorT col)
 {
@@ -248,7 +224,7 @@ void draw_dial(Canvas& canvas, Coord x, Coord y, uint8_t position, ColorT col)
 		for (const auto& pt : dial_arc)
 			tb.pixel(pgm_read_byte(&pt.x) + x, pgm_read_byte(&pt.y) + y, col);
 	}
-	
+
 	// draw the dial line
 	const Coord x1 = pgm_read_byte(&dial_arc[position].x) + x;
 	const Coord y1 = pgm_read_byte(&dial_arc[position].y) + y;
@@ -265,9 +241,9 @@ void draw_dial_at(const char* name, Coord x, Coord y, Color col)
 	}
 
 	Window<64, 8> win(colBlack);
-	const uint16_t width = get_text_width(name, true);
+	const uint16_t width = get_text_width_small(name);
 	const Coord textx = width > 64 ? 0 : (64 - width) / 2;
-	print(win, name, true, textx, 0, col, colBlack);
+	print_small(win, name, textx, 0, col, colBlack);
 	Display::blit(win, x, y + 38);
 }
 
@@ -275,28 +251,29 @@ void refresh_screen()
 {
 	Display d;
 
+	// the battery
 	const uint8_t battery = rand() % 0x80;
-
 	fill_rect(d, 0, 0, battery, 3, colGreen);
 	fill_rect(d, battery, 0, 127 - battery, 3, colBlack);
 
+	// the selected effect name
 	{
 		const char* names[] = {"Reverb", "Chorus", "Delay"};
 		const uint8_t namendx = rand() % 3;
-		const uint16_t width = get_text_width(names[namendx], false);
+		const uint16_t width = get_text_width_large(names[namendx]);
 
 		const Coord x = width > 128 ? 0 : (128 - width) / 2;
 
 		Window<128, 19> win(colBlack);
-		print(win, names[namendx], false, x, 0, colWhite, colBlack);
+		print_large(win, names[namendx], x, 0, colWhite);
 		d.blit(win, 0, 10);
 	}
 
-	// the dials
-	draw_dial_at("pot 1",  0, 36, colGreen);
-	draw_dial_at("pot 2", 64, 36, colBlue);
-	draw_dial_at("pot 3",  0, 95, colRed);
-	draw_dial_at("wet/dry", 64, 95, colWhite);
+	// the knobs
+	draw_dial_at("green",  0, 36, colGreen);
+	draw_dial_at("blue", 64, 36, colBlue);
+	draw_dial_at("red",  0, 95, colRed);
+	draw_dial_at("white", 64, 95, colWhite);
 }
 
 int main()
