@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <util/delay.h>
+#include <avr/io.h>
 #include <avr/pgmspace.h>
+#include <util/delay.h>
 
 #include "iopin.h"
 #include "timera.h"
@@ -218,7 +219,7 @@ void draw_dial(Canvas& canvas, Coord x, Coord y, uint8_t position, ColorT col)
 	ThickBrush<Canvas> tb(canvas);
 
 	{
-		typename Canvas::Transaction t;
+		[[maybe_unused]] typename Canvas::Transaction t;
 
 		// draw the arc
 		for (const auto& pt : dial_arc)
@@ -232,11 +233,11 @@ void draw_dial(Canvas& canvas, Coord x, Coord y, uint8_t position, ColorT col)
 	draw_line(tb, x + 20, y + 20, x1, y1, col);
 }
 
-void draw_dial_at(const char* name, Coord x, Coord y, Color col)
+void draw_dial_at(const char* name, uint8_t position, Coord x, Coord y, Color col)
 {
 	{
 		Window<43, 36> win(colBlack);
-		draw_dial(win, 0, 0, rand() % DIAL_ARC_POINTS, col);
+		draw_dial(win, 0, 0, position, col);
 		Display::blit(win, x + 11, y);
 	}
 
@@ -269,14 +270,14 @@ void refresh_screen()
 		d.blit(win, 0, 10);
 	}
 
-	// the knobs
-	draw_dial_at("green",  0, 36, colGreen);
-	draw_dial_at("blue", 64, 36, colBlue);
-	draw_dial_at("red",  0, 95, colRed);
-	draw_dial_at("white", 64, 95, colWhite);
+	// draw the knobs
+	draw_dial_at("green",  rand() % DIAL_ARC_POINTS, 0, 36, colGreen);
+	draw_dial_at("blue", rand() % DIAL_ARC_POINTS, 64, 36, colBlue);
+	draw_dial_at("red",  rand() % DIAL_ARC_POINTS, 0, 95, colRed);
+	draw_dial_at("white", rand() % DIAL_ARC_POINTS, 64, 95, colWhite);
 }
 
-int main()
+int main() 
 {
 	init_hw();
 

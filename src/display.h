@@ -35,7 +35,6 @@ public:
 
 	static void pixel(uint8_t x, uint8_t y, Color col)
 	{
-		dprint("%d %d\n", x, y);
 		set_addr_window(x, y, 1, 1);
 		color(col);
 	}

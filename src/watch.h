@@ -5,7 +5,12 @@
 class Watch : public TimerA<1, TimerA_Prescale::div1024>
 {
 public:
-	static uint32_t ticks2ms(const uint32_t ticks)
+	static uint32_t ticks2ms_long(const uint32_t ticks)
+	{
+		return ticks * get_div() / (F_CPU / 1000);
+	}
+
+	static uint16_t ticks2ms(const uint16_t ticks)
 	{
 		return ticks * get_div() / (F_CPU / 1000);
 	}

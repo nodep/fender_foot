@@ -20,7 +20,7 @@ class TimerA
 private:
 	static_assert(TimerNum <= 1, "We don't have that timer");
 
-	static TCA_SINGLE_t& get_tca()
+	constexpr static TCA_SINGLE_t& get_tca()
 	{
 		return (&TCA0)[TimerNum].SINGLE;
 	}

@@ -194,14 +194,13 @@ void Display::send_init_command(const uint8_t commandByte, const uint8_t* dataBy
 
 void Display::set_addr_window(const Coord x, const Coord y, const Coord w, const Coord h)
 {
-	const uint32_t xa = ((uint32_t)x << 16) | (x + w - 1);
-	const uint32_t ya = ((uint32_t)y << 16) | (y + h - 1);
-
 	send_command(ST77XX_CASET); // column addr set
-	spi::send32(xa);
+	spi::send16(x);
+	spi::send16(x + w - 1);
 
 	send_command(ST77XX_RASET); // row addr set
-	spi::send32(ya);
+	spi::send16(y);
+	spi::send16(y + h - 1);
 
 	send_command(ST77XX_RAMWR); // write to RAM
 }

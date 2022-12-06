@@ -103,7 +103,7 @@ void print_char_large(Canvas& canvas, const Coord x, const Coord y, unsigned cha
 template <typename Canvas, typename ColorT>
 void print_small(Canvas& canvas, const char* str, const Coord x, const Coord y, const ColorT color, const ColorT bgcolor)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	uint8_t cursor_x = x;
 	uint8_t cursor_y = y;
@@ -127,7 +127,7 @@ void print_small(Canvas& canvas, const char* str, const Coord x, const Coord y, 
 template <typename Canvas, typename ColorT>
 void print_large(Canvas& canvas, const char* str, const Coord x, const Coord y, const ColorT color)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	uint8_t cursor_x = x;
 	uint8_t cursor_y = y + 14;
@@ -163,7 +163,7 @@ void print_large(Canvas& canvas, const char* str, const Coord x, const Coord y, 
 
 inline uint16_t get_text_width_small(const char* text)
 {
-	return 6 * strlen(text);
+	return static_cast<uint16_t>(6 * strlen(text));
 }
 
 uint16_t get_text_width_large(const char* text);

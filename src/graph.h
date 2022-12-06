@@ -64,7 +64,7 @@ constexpr inline ColorRGB color2rgb(const Color col)
 template <typename Canvas, typename ColorT>
 void draw_pixel(Canvas& canvas, Coord x, Coord y, ColorT color)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	canvas.pixel(x, y, color);
 }
@@ -72,7 +72,7 @@ void draw_pixel(Canvas& canvas, Coord x, Coord y, ColorT color)
 template <typename Canvas, typename ColorT>
 void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, ColorT color)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
@@ -112,7 +112,7 @@ void draw_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, ColorT color)
 template <typename Canvas, typename ColorT>
 void fill_circle(Canvas& canvas, Coord x0, Coord y0, Coord r, ColorT color)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	canvas.vline(x0, y0 - r, 2 * r + 1, color);
 
@@ -166,7 +166,7 @@ void swap(T& a1, T& a2)
 template <typename Canvas, typename ColorT>
 void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const ColorT color)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	const bool steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -212,7 +212,7 @@ void draw_line(Canvas& canvas, Coord x0, Coord y0, Coord x1, Coord y1, const Col
 template <typename Canvas, typename ColorT>
 void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, ColorT color)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	for (Coord x = x0; x < x0 + w; x++)
 		for (Coord y = x0; y < y0 + h; y++)
@@ -222,7 +222,7 @@ void fill_rect(Canvas& canvas, Coord x0, Coord y0, Coord w, Coord h, ColorT colo
 template <typename Canvas, typename ColorT>
 void draw_raster(Canvas& canvas, const uint8_t* raster, Coord x0, Coord y0, Coord w, Coord h, ColorT color, ColorT bgcolor)
 {
-	typename Canvas::Transaction t;
+	[[maybe_unused]] typename Canvas::Transaction t;
 
 	Color curr_color = bgcolor;
 
@@ -269,10 +269,7 @@ public:
 	static const Coord Width = W;
 	static const Coord Height = H;
 
-	struct Transaction {
-		Transaction() = default;
-		~Transaction() = default;
-	};
+	struct Transaction {};
 
 	WindowRGB(ColorRGB colbgnd)
 	{
@@ -319,10 +316,7 @@ public:
 	static const Coord Width = W;
 	static const Coord Height = H;
 
-	struct Transaction {
-		Transaction() = default;
-		~Transaction() = default;
-	};
+	struct Transaction {};
 
 	Window(Color colbgnd)
 	{

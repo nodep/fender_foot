@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include <string.h>
 
+#include <avr/io.h>
 #include <avr/pgmspace.h>
 
 #include "graph.h"
@@ -29,14 +29,16 @@ uint16_t get_text_width_large(const char* text)
 	uint16_t result = 0;
 	while (*text)
 	{
-		const GFXglyph* glyph = pgm_read_glyph_ptr(largeFont, *text - first);
-		const uint8_t w = pgm_read_byte(&glyph->xAdvance);
+		const uint8_t c = *text;
 
-		result += w;
+		if (c >= first)
+		{
+			const GFXglyph* glyph = pgm_read_glyph_ptr(largeFont, c - first);
+			result += pgm_read_byte(&glyph->xAdvance);
+		}
 
 		++text;
 	}
 
 	return result;
 }
-

@@ -23,7 +23,7 @@ protected:
 		return (&VPORTA)[Port - 'A'];
 	}
 
-	static constexpr uint8_t bitmask = 1 << PinNum;
+	constexpr static uint8_t bitmask = 1 << PinNum;
 
 public:
 

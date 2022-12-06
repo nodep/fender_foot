@@ -206,16 +206,16 @@ void Pedals::update_button_state(const PedalEvent event)
 {
 	switch (event)
 	{
-	case evExpBtnDown:		exp_btn = true;				break;
-	case evExpBtnUp:		exp_btn = false;			break;
-	case evFtswBtn1Down:	ftsw_btn1 = true;			break;
-	case evFtswBtn1Up:		ftsw_btn1 = false;			break;
-	case evFtswBtn2Down:	ftsw_btn2 = true;			break;
-	case evFtswBtn2Up:		ftsw_btn2 = false;			break;
-	case evFtswBtn3Down:	ftsw_btn3 = true;			break;
-	case evFtswBtn3Up:		ftsw_btn3 = false;			break;
-	case evFtswBtn4Down:	ftsw_btn4 = true;			break;
-	case evFtswBtn4Up:		ftsw_btn4 = false;			break;
+	case evExpBtnDown:		exp_btn = true;			break;
+	case evExpBtnUp:		exp_btn = false;		break;
+	case evFtswBtn1Down:	ftsw_btn1 = true;		break;
+	case evFtswBtn1Up:		ftsw_btn1 = false;		break;
+	case evFtswBtn2Down:	ftsw_btn2 = true;		break;
+	case evFtswBtn2Up:		ftsw_btn2 = false;		break;
+	case evFtswBtn3Down:	ftsw_btn3 = true;		break;
+	case evFtswBtn3Up:		ftsw_btn3 = false;		break;
+	case evFtswBtn4Down:	ftsw_btn4 = true;		break;
+	case evFtswBtn4Up:		ftsw_btn4 = false;		break;
 	default:
 		break;
 	}

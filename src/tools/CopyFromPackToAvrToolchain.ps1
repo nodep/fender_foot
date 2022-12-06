@@ -1,11 +1,12 @@
 # this script collects the needed files and copies them to 
-# their place in the AVR toolchain directory
+# their place in the avr-gcc directory
 
-# The path where the AVR toolchain is unpacked
-$atpath = "C:\avr-gcc-12.1.0-x64-windows"
-# The path the the Microchip Pack for the 
+# The path where the avr-gcc is unpacked
+$atpath = "D:\avr"
+
+# The path for the Microchip Pack for the 
 # Microchip AVR-Dx Series Device Support (2.1.152)
-$mppath = "C:\avr-gcc-12.1.0-x64-windows\AVR-Dx_DFP.2.1.146"
+$mppath = "D:\Microchip.AVR-Dx_DFP.2.1.152"
 
 # copy the device-specs
 Get-ChildItem -Path $mppath"\gcc\dev\*" -Directory |
@@ -26,4 +27,3 @@ Foreach-Object {
 
 Write-Output "REM includes"
 Write-Output "copy $mppath\include\avr\*.h $atpath\avr\include\avr\"
-
