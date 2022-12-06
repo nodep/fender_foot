@@ -7,13 +7,14 @@ F_CPU   = 24000000
 # Get avrdude for Windows here: https://github.com/mariusgreuel/avrdude
 AVRDUDE = avrdude -c pkobn_updi -p $(DEVICE)
 
-CFLAGS  = -std=c++17 -Wall -Os -ffunction-sections -fdata-sections -DF_CPU=$(F_CPU)
+CFLAGS  = -std=c++23 -Wall -Os -ffunction-sections -fdata-sections -DF_CPU=$(F_CPU)
 CFLAGS += -D_DEBUG
+CFLAGS += --param=min-pagesize=0 -Wno-volatile	# only for GCC 12.1
 
 LFLAGS  = -Wl,--relax,--gc-sections
 #LFLAGS += -u vfprintf
 
-# I used AVR Toolchain 3.7 and the latest AVR-Dx pack which you can get here:
+# I used avr-gcc 12.1 and the latest AVR-Dx pack which you can get here:
 # https://packs.download.microchip.com/
 # The file has an extension atpack, but it is actually a zip file.
 # Rename it and unzip.

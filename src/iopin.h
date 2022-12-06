@@ -13,12 +13,12 @@ protected:
 	//////////////////
 	// helpers
 	//////////////////
-	static register8_t& get_pinctrl()
+	constexpr static register8_t& get_pinctrl()
 	{
 		return (&((&PORTA)[Port - 'A'].PIN0CTRL))[PinNum];
 	}
 
-	static VPORT_t& get_vport()
+	constexpr static VPORT_t& get_vport()
 	{
 		return (&VPORTA)[Port - 'A'];
 	}
