@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <avr/io.h>
 
 #if _DEBUG

@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <avr/pgmspace.h>
 #include <util/delay.h>
@@ -47,7 +48,6 @@ enum ST77Constants : uint8_t
 	ST77XX_RDID3 = 0xDC,
 	ST77XX_RDID4 = 0xDD,
 
-	// Some register settings
 	ST7735_MADCTL_BGR = 0x08,
 	ST7735_MADCTL_MH = 0x04,
 
@@ -72,7 +72,7 @@ enum ST77Constants : uint8_t
 	ST_CMD_DELAY = 0x80,		// special signifier for command lists
 };
 
-static const uint8_t PROGMEM initCommands[] =
+static const uint8_t initCommands[] PROGMEM =
 {										// 7735R init
 	ST77XX_SWRESET, ST_CMD_DELAY,		// Software reset, 0 args, w/delay
 		150,							// 150 ms delay

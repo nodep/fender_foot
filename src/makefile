@@ -42,6 +42,7 @@ $(TGTNAME).hex: $(OBJPATH) $(OBJECTS)
 	@rm -f $(TGTNAME).hex $(TGTNAME).eep.hex
 	@avr-objcopy -j .text -j .data -O ihex $(TGTNAME).elf $(TGTNAME).hex
 	@avr-objdump -h -S $(TGTNAME).elf > $(TGTNAME).lst
+	@echo size:
 	@avr-size $(TGTNAME).elf
 
 flash: all hex

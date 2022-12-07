@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdlib.h>
-
 using Coord = uint8_t;
 
 enum Color : uint8_t
